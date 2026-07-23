@@ -1,51 +1,71 @@
 import { create } from 'zustand'
-import { ExecutionStep } from '../types/agent'
+
+export interface ExecutionStep {
+  step: number;
+  type: string;
+  message: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  sender: 'user' | 'agent';
+  text: string;
+  timestamp: string;
+  status?: 'RUNNING' | 'SUCCESS' | 'FAILED';
+  steps?: ExecutionStep[];
+  result?: {
+    target_urn: string;
+    target_name: string;
+    pii_columns: string[];
+    sql: string;
+    dbt_yaml: string;
+  };
+}
 
 interface WorkspaceState {
   prompt: string;
+  messages: ChatMessage[];
   isExecuting: boolean;
-  steps: ExecutionStep[];
-  targetUrn: string | null;
-  targetName: string | null;
-  piiColumns: string[];
-  generatedSql: string | null;
-  generatedDbtYaml: string | null;
+  selectedUrn: string | null;
+  selectedPiiColumns: string[];
   
   setPrompt: (prompt: string) => void;
-  startExecution: () => void;
-  addStep: (step: ExecutionStep) => void;
-  completeExecution: (data: any) => void;
-  resetWorkspace: () => void;
+  addMessage: (message: ChatMessage) => void;
+  updateAgentMessage: (id: string, updates: Partial<ChatMessage>) => void;
+  setSelectedUrn: (urn: string | null, piiColumns?: string[]) => void;
+  clearHistory: () => void;
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
-  prompt: 'Build a dbt model to calculate monthly customer retention using Tier-1 production tables.',
+  prompt: '',
+  messages: [
+    {
+      id: 'welcome',
+      sender: 'agent',
+      text: 'Hello! I am Synex, your DataHub autonomous data engineering agent. Tell me what models or transformations you would like to build today.',
+      timestamp: new Date().toLocaleTimeString('en-US', { hour12: false }),
+    }
+  ],
   isExecuting: false,
-  steps: [],
-  targetUrn: null,
-  targetName: null,
-  piiColumns: [],
-  generatedSql: null,
-  generatedDbtYaml: null,
+  selectedUrn: null,
+  selectedPiiColumns: [],
 
   setPrompt: (prompt) => set({ prompt }),
-  startExecution: () => set({ isExecuting: true, steps: [], generatedSql: null, generatedDbtYaml: null }),
-  addStep: (step) => set((state) => ({ steps: [...state.steps, step] })),
-  completeExecution: (data) => set({
-    isExecuting: false,
-    targetUrn: data.target_urn,
-    targetName: data.target_name,
-    piiColumns: data.pii_columns || [],
-    generatedSql: data.sql,
-    generatedDbtYaml: data.dbt_yaml
-  }),
-  resetWorkspace: () => set({
-    isExecuting: false,
-    steps: [],
-    targetUrn: null,
-    targetName: null,
-    piiColumns: [],
-    generatedSql: null,
-    generatedDbtYaml: null
+  addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
+  updateAgentMessage: (id, updates) => set((state) => ({
+    messages: state.messages.map(msg => msg.id === id ? { ...msg, ...updates } : msg)
+  })),
+  setSelectedUrn: (urn, piiColumns = []) => set({ selectedUrn: urn, selectedPiiColumns: piiColumns }),
+  clearHistory: () => set({
+    messages: [
+      {
+        id: 'welcome',
+        sender: 'agent',
+        text: 'Workspace cleared. What would you like to build next?',
+        timestamp: new Date().toLocaleTimeString('en-US', { hour12: false }),
+      }
+    ],
+    selectedUrn: null,
+    selectedPiiColumns: []
   })
 }))

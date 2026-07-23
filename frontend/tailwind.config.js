@@ -8,14 +8,21 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: '#0B0F17',
-        surface: '#151C2C',
-        surfaceBorder: '#232D42',
-        accent: '#3B82F6',
-        accentGlow: 'rgba(59, 130, 246, 0.15)',
-        success: '#10B981',
-        warning: '#F59E0B',
+        background: '#060913',
+        surface: '#0D1527',
+        surfaceBorder: '#1E293B',
+        primary: '#6366F1', // Indigo primary action
+        primaryHover: '#4F46E5', // Darker indigo for hover
+        accent: '#00E5FF', // Cyan informational accent
+        accentGlow: 'rgba(0, 229, 255, 0.15)',
+        success: '#05F29B',
+        warning: '#FF9F00',
         danger: '#EF4444'
+      },
+      fontFamily: {
+        sans: ['var(--font-inter)', 'sans-serif'],
+        display: ['var(--font-outfit)', 'sans-serif'],
+        mono: ['var(--font-mono)', 'monospace'],
       }
     },
   },

@@ -20,10 +20,10 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #151C2C;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #232D42;
+  background: #1E293B;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {

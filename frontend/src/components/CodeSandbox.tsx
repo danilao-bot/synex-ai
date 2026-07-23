@@ -1,66 +1,65 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Code2, FileCode, Copy, Check } from 'lucide-react'
+import React from 'react'
+import { Database, Settings2, Copy, Loader2 } from 'lucide-react'
+import Editor from '@monaco-editor/react'
 import { useWorkspaceStore } from '../store/useWorkspaceStore'
 
 export const CodeSandbox: React.FC = () => {
-  const { generatedSql, generatedDbtYaml } = useWorkspaceStore()
-  const [activeTab, setActiveTab] = useState<'sql' | 'yaml'>('sql')
-  const [copied, setCopied] = useState(false)
+  const { isComplete, executionResult } = useWorkspaceStore()
 
-  const content = activeTab === 'sql' ? generatedSql : generatedDbtYaml
-
-  const handleCopy = () => {
-    if (!content) return
-    navigator.clipboard.writeText(content)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
-  }
+  const code = isComplete && executionResult 
+    ? executionResult.sql 
+    : `-- Waiting for Synex to generate code...
+-- Execute a command above to see the results.
+`
 
   return (
-    <div className="bg-surface border border-surfaceBorder rounded-xl p-4 flex flex-col h-full shadow-lg">
-      <div className="flex items-center justify-between pb-3 border-b border-surfaceBorder mb-3">
-        <div className="flex items-center gap-2">
-          <Code2 className="w-5 h-5 text-accent" />
-          <h2 className="font-semibold text-sm tracking-wide text-gray-200">SYNTHESIZED CODE & DATA CONTRACT</h2>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="flex bg-background border border-surfaceBorder rounded p-0.5 text-xs">
-            <button
-              onClick={() => setActiveTab('sql')}
-              className={`px-2.5 py-1 rounded transition ${activeTab === 'sql' ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:text-gray-200'}`}
-            >
-              SQL Model
-            </button>
-            <button
-              onClick={() => setActiveTab('yaml')}
-              className={`px-2.5 py-1 rounded transition ${activeTab === 'yaml' ? 'bg-accent text-white font-medium' : 'text-gray-400 hover:text-gray-200'}`}
-            >
-              dbt schema.yml
-            </button>
+    <div className="w-full h-full bg-[#0A0E17] border border-surfaceBorder rounded-xl shadow-lg flex flex-col overflow-hidden relative z-0 isolate">
+      {/* Tabs */}
+      <div className="flex items-center justify-between bg-surface border-b border-surfaceBorder px-4 shrink-0 h-10">
+        <div className="flex h-full">
+          <div className="flex items-center gap-2 border-b-2 border-accent text-accent px-4 h-full bg-[#0A0E17]">
+            <Database className="w-3.5 h-3.5" />
+            <span className="text-xs font-bold tracking-wider">model.sql</span>
           </div>
-
-          <button
-            onClick={handleCopy}
-            disabled={!content}
-            className="p-1.5 rounded bg-surface border border-surfaceBorder hover:bg-surfaceBorder text-gray-300 disabled:opacity-40 transition"
-            title="Copy code"
-          >
-            {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-          </button>
+          <div className="flex items-center gap-2 text-gray-500 px-4 h-full hover:text-gray-300 cursor-pointer transition">
+            <Settings2 className="w-3.5 h-3.5" />
+            <span className="text-xs font-bold tracking-wider">schema.yml</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 text-xs font-mono text-gray-500">
+          <Copy className="w-3.5 h-3.5 hover:text-white cursor-pointer transition" />
         </div>
       </div>
 
-      <div className="flex-1 bg-background border border-surfaceBorder rounded-lg p-3 font-mono text-xs overflow-auto text-gray-200">
-        {content ? (
-          <pre className="whitespace-pre-wrap leading-relaxed">{content}</pre>
-        ) : (
-          <div className="text-center text-gray-500 italic py-12">
-            Synthesized SQL and dbt contracts will appear here after agent execution...
-          </div>
-        )}
+      {/* Monaco Editor Content */}
+      <div className="flex-1 overflow-hidden bg-[#0A0E17]">
+        <Editor
+          height="100%"
+          defaultLanguage="sql"
+          theme="vs-dark"
+          value={code}
+          loading={
+            <div className="flex items-center justify-center h-full text-accent flex-col gap-2">
+              <Loader2 className="w-6 h-6 animate-spin" />
+              <span className="text-xs font-mono">Loading Editor...</span>
+            </div>
+          }
+          options={{
+            minimap: { enabled: false },
+            fontSize: 12,
+            fontFamily: "'JetBrains Mono', 'Courier New', monospace",
+            lineHeight: 24,
+            padding: { top: 16 },
+            readOnly: false,
+            scrollBeyondLastLine: false,
+            matchBrackets: "always",
+            renderLineHighlight: "all",
+            smoothScrolling: true,
+            cursorBlinking: "smooth",
+          }}
+        />
       </div>
     </div>
   )

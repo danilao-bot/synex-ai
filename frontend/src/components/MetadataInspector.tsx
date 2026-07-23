@@ -1,76 +1,111 @@
 'use client'
 
 import React from 'react'
-import { ShieldCheck, Tag, Lock, AlertTriangle, Layers } from 'lucide-react'
+import { AlertTriangle, UserCircle2 } from 'lucide-react'
 import { useWorkspaceStore } from '../store/useWorkspaceStore'
 
 export const MetadataInspector: React.FC = () => {
-  const { targetName, targetUrn, piiColumns } = useWorkspaceStore()
+  const { selectedUrn, selectedPiiColumns } = useWorkspaceStore()
+
+  if (!selectedUrn) {
+    return (
+      <div className="h-full flex flex-col justify-center items-center text-center px-4 animate-fadeIn">
+        <div className="w-24 h-24 mb-6 relative">
+          {/* Wireframe Outline */}
+          <svg viewBox="0 0 100 100" fill="none" className="w-full h-full text-surfaceBorder">
+            <rect x="10" y="10" width="80" height="80" rx="8" stroke="currentColor" strokeWidth="3" strokeDasharray="6 6"/>
+            <rect x="20" y="30" width="60" height="8" rx="4" fill="currentColor" opacity="0.5"/>
+            <rect x="20" y="50" width="40" height="8" rx="4" fill="currentColor" opacity="0.5"/>
+            <rect x="20" y="70" width="50" height="8" rx="4" fill="currentColor" opacity="0.5"/>
+          </svg>
+        </div>
+        <h2 className="text-lg font-display font-semibold text-gray-400 mb-2">Aspect Inspector</h2>
+        <p className="text-gray-500 text-sm font-sans max-w-[200px] leading-relaxed">
+          Select a dataset node in the lineage graph to inspect its DataHub metadata.
+        </p>
+      </div>
+    )
+  }
 
   return (
-    <div className="bg-surface border border-surfaceBorder rounded-xl p-4 flex flex-col h-full shadow-lg">
-      <div className="flex items-center justify-between pb-3 border-b border-surfaceBorder mb-3">
-        <div className="flex items-center gap-2">
-          <Layers className="w-5 h-5 text-accent" />
-          <h2 className="font-semibold text-sm tracking-wide text-gray-200">DATAHUB ASPECT INSPECTOR</h2>
+    <div className="h-full flex flex-col gap-8 animate-fadeIn">
+      <div>
+        <h2 className="text-xl font-display font-semibold text-white mb-2 tracking-tight">Aspect Inspector</h2>
+        <div className="w-12 h-1 bg-primary"></div>
+      </div>
+
+      {/* Dataset URN */}
+      <div>
+        <h3 className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-2">Dataset URN</h3>
+        <div className="bg-[#041A24] border border-accent/30 rounded p-3 text-accent font-mono text-xs break-all">
+          {selectedUrn}
         </div>
-        <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 font-mono">Aspect Store Verified</span>
       </div>
 
-      <div className="flex-1 bg-background border border-surfaceBorder rounded-lg p-3 overflow-y-auto space-y-3 font-mono text-xs">
-        {targetUrn ? (
-          <>
-            <div>
-              <div className="text-gray-400 text-[10px]">DATASET URN</div>
-              <div className="text-gray-200 font-bold truncate text-[11px]">{targetUrn}</div>
-            </div>
-
-            <div className="flex gap-2">
-              <div className="flex-1 bg-surface border border-surfaceBorder p-2 rounded">
-                <div className="text-gray-400 text-[10px] flex items-center gap-1">
-                  <Tag className="w-3 h-3 text-accent" /> TIER
-                </div>
-                <div className="text-accent font-bold mt-0.5">Tier-1 Production</div>
-              </div>
-              <div className="flex-1 bg-surface border border-surfaceBorder p-2 rounded">
-                <div className="text-gray-400 text-[10px] flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3 text-emerald-400" /> DEPRECATION
-                </div>
-                <div className="text-emerald-400 font-bold mt-0.5">Active (Not Deprecated)</div>
-              </div>
-            </div>
-
-            <div className="bg-surface border border-surfaceBorder p-2.5 rounded">
-              <div className="text-gray-400 text-[10px] flex items-center gap-1 mb-1">
-                <Lock className="w-3 h-3 text-warning" /> GOVERNANCE & PII TAGS
-              </div>
-              {piiColumns.length > 0 ? (
-                <div className="flex gap-1 flex-wrap">
-                  {piiColumns.map((col, idx) => (
-                    <span key={idx} className="bg-warning/20 text-warning px-2 py-0.5 rounded text-[10px]">
-                      PII: {col} (Masked)
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-gray-400 text-[10px]">No PII detected.</span>
-              )}
-            </div>
-
-            <div className="bg-surface border border-surfaceBorder p-2.5 rounded">
-              <div className="text-gray-400 text-[10px] flex items-center gap-1 mb-1">
-                <ShieldCheck className="w-3 h-3 text-accent" /> OWNERSHIP & GLOSSARY
-              </div>
-              <div className="text-gray-300 text-[11px]">Owner: Data Platform Core Team</div>
-              <div className="text-gray-400 text-[10px] mt-0.5">Term: Financials.Revenue_Metrics</div>
-            </div>
-          </>
-        ) : (
-          <div className="text-center text-gray-500 text-xs italic py-8">
-            Select or execute a prompt to view DataHub aspect metadata...
+      {/* Ownership */}
+      <div>
+        <h3 className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-2">Ownership</h3>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm shadow-lg">
+            DA
           </div>
-        )}
+          <div>
+            <div className="text-sm font-bold text-gray-200">Data Analytics Team</div>
+            <div className="text-xs text-gray-500">#analytics-eng</div>
+          </div>
+        </div>
       </div>
+
+      {/* PII Warning */}
+      {selectedPiiColumns && selectedPiiColumns.length > 0 && (
+        <div className="bg-[#1A1400] border border-warning/50 rounded-lg p-4 shadow-[0_0_15px_rgba(255,159,0,0.1)]">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="w-4 h-4 text-warning" />
+            <span className="text-xs font-bold text-warning tracking-widest uppercase">PII Detected</span>
+          </div>
+          <p className="text-xs text-gray-300 leading-relaxed font-sans">
+            Fields <span className="text-warning font-mono">{selectedPiiColumns.join(', ')}</span> have been flagged as Tier-1 PII.
+          </p>
+        </div>
+      )}
+
+      {/* Freshness & DQ */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-surface border border-surfaceBorder rounded p-3">
+          <div className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-1">Freshness</div>
+          <div className="text-success font-bold text-lg">12m ago</div>
+        </div>
+        <div className="bg-surface border border-surfaceBorder rounded p-3">
+          <div className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-1">DQ Score</div>
+          <div className="text-accent font-bold text-lg">98.2%</div>
+        </div>
+      </div>
+
+      {/* Schema Preview */}
+      <div>
+        <h3 className="text-[10px] font-bold text-gray-400 tracking-widest uppercase mb-3">Schema Preview</h3>
+        <div className="space-y-2">
+          <div className="flex justify-between items-center text-xs pb-2 border-b border-surfaceBorder/50">
+            <span className="font-mono text-gray-300">order_id</span>
+            <span className="bg-surface px-1.5 py-0.5 rounded text-gray-500 font-mono text-[10px]">INT64</span>
+          </div>
+          <div className="flex justify-between items-center text-xs pb-2 border-b border-surfaceBorder/50">
+            <span className="font-mono text-gray-300">status</span>
+            <span className="bg-surface px-1.5 py-0.5 rounded text-gray-500 font-mono text-[10px]">STRING</span>
+          </div>
+          <div className="flex justify-between items-center text-xs pb-2 border-b border-surfaceBorder/50">
+            <span className="font-mono text-gray-300">is_enriched</span>
+            <span className="bg-surface px-1.5 py-0.5 rounded text-gray-500 font-mono text-[10px]">BOOL</span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="mt-auto pt-4">
+         <button className="w-full bg-transparent border border-surfaceBorder text-gray-400 hover:text-primary hover:border-primary font-bold text-xs tracking-wider uppercase py-3 rounded transition-all duration-200">
+            View Full Metadata
+         </button>
+      </div>
+
     </div>
   )
 }
