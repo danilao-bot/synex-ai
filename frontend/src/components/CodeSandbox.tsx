@@ -6,13 +6,10 @@ import Editor from '@monaco-editor/react'
 import { useWorkspaceStore } from '../store/useWorkspaceStore'
 
 export const CodeSandbox: React.FC = () => {
-  const { isComplete, executionResult } = useWorkspaceStore()
+  const messages = useWorkspaceStore((state) => state.messages)
+  const lastAgentMsg = [...messages].reverse().find((m) => m.sender === 'agent' && m.result?.sql)
 
-  const code = isComplete && executionResult 
-    ? executionResult.sql 
-    : `-- Waiting for Synex to generate code...
--- Execute a command above to see the results.
-`
+  const code = lastAgentMsg?.result?.sql || `-- Waiting for Synex to generate code...\n-- Execute a command above to see the results.\n`
 
   return (
     <div className="w-full h-full bg-[#0A0E17] border border-surfaceBorder rounded-xl shadow-lg flex flex-col overflow-hidden relative z-0 isolate">
@@ -30,13 +27,15 @@ export const CodeSandbox: React.FC = () => {
         </div>
         <div className="flex items-center gap-3 text-xs font-mono text-gray-500">
           <CommitButton />
-          <Copy 
-            className="w-3.5 h-3.5 hover:text-white cursor-pointer transition ml-2" 
+          <button 
             onClick={() => {
               navigator.clipboard.writeText(code)
             }}
             title="Copy Code"
-          />
+            className="hover:text-white text-gray-500 transition cursor-pointer ml-2"
+          >
+            <Copy className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
