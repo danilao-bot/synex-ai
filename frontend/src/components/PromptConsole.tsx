@@ -52,12 +52,7 @@ export const PromptConsole: React.FC = () => {
     }
 
     try {
-      // Trigger steps mock simulating trace logs
-      setTimeout(() => pushStep(2, 'INFO', 'Establishing secure handshake with DataHub GMS...'), 1000)
-      setTimeout(() => pushStep(3, 'SUCCESS', 'Connected to DataHub. Fetching schema properties for sales tables...'), 2000)
-      setTimeout(() => pushStep(4, 'WARN', 'PII Detected: customer_email, phone_number. Flagging columns for encryption...'), 3000)
-      
-      // Make backend API request
+      // Make backend API request to FastAPI engine
       const response = await fetch('http://localhost:8000/api/v1/run', {
         method: 'POST',
         headers: {
@@ -67,54 +62,49 @@ export const PromptConsole: React.FC = () => {
       })
 
       if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`)
+        const errDetail = await response.text()
+        throw new Error(`Server error (${response.status}): ${errDetail || response.statusText}`)
       }
 
       const data = await response.json()
 
-      setTimeout(() => {
-        updateAgentMessage(agentMsgId, {
-          status: 'SUCCESS',
-          text: 'dbt model and lineage successfully synthesized. PII encryption applied to Snowflake tables.',
-          result: {
-            target_urn: data.target_urn || 'urn:li:dataset:(snowflake,prod.sales.fct_revenue)',
-            target_name: data.target_name || 'prod.sales.fct_revenue',
-            pii_columns: data.pii_columns || ['customer_email', 'phone_number'],
-            sql: data.sql,
-            dbt_yaml: data.dbt_yaml || ''
-          }
-        })
-        // Automatically select dataset in inspector
-        setSelectedUrn(
-          data.target_urn || 'urn:li:dataset:(snowflake,prod.sales.fct_revenue)', 
-          data.pii_columns || ['customer_email', 'phone_number']
-        )
-        setLoading(false)
-      }, 4000)
+      // Format steps from backend trace_logs or construct step objects
+      const serverSteps = (data.trace_logs || []).map((t: any, idx: number) => ({
+        step: t.step || idx + 1,
+        type: t.type || 'INFO',
+        message: t.message ? `[${now()}] ${t.type || 'INFO'}: ${t.message}` : `[${now()}] INFO: Step ${idx + 1}`
+      }))
+
+      updateAgentMessage(agentMsgId, {
+        status: 'SUCCESS',
+        text: `Execution completed successfully. Synthesized dbt model for ${data.target_name || data.target_urn || 'target dataset'}.`,
+        steps: serverSteps.length > 0 ? serverSteps : [
+          { step: 1, type: 'INFO', message: `[${now()}] INFO: Execution finished.` },
+          { step: 2, type: 'SUCCESS', message: `[${now()}] SUCCESS: Generated model for ${data.target_name || 'dataset'}.` }
+        ],
+        result: {
+          target_urn: data.target_urn || 'urn:li:dataset:(snowflake,prod.sales.fct_revenue)',
+          target_name: data.target_name || 'prod.sales.fct_revenue',
+          pii_columns: data.pii_columns || [],
+          sql: data.sql || '-- No SQL generated',
+          dbt_yaml: data.dbt_yaml || ''
+        }
+      })
+
+      if (data.target_urn) {
+        setSelectedUrn(data.target_urn, data.pii_columns || [])
+      }
 
     } catch (err: any) {
-      // Fallback fallback mock if backend is down so the user can still test the interface
-      setTimeout(() => {
-        pushStep(5, 'WARN', `Failed to reach backend: ${err.message}. Using offline sandbox engine.`)
-        pushStep(6, 'SUCCESS', 'Offline AST validation: OK. Code synthesized.')
-        
-        updateAgentMessage(agentMsgId, {
-          status: 'SUCCESS',
-          text: 'Offline Synthesis complete. Lineage resolved using cached schema.',
-          result: {
-            target_urn: 'urn:li:dataset:(snowflake,prod.sales.fct_revenue)',
-            target_name: 'prod.sales.fct_revenue',
-            pii_columns: ['customer_email', 'phone_number'],
-            sql: `WITH raw_orders AS (\n    SELECT * FROM {{ ref('stg_orders') }}\n),\n\ntransformed AS (\n    SELECT \n        order_id,\n        customer_id,\n        order_date,\n        -- PII Masking applied by Synex\n        SHA256(customer_email) AS email_hash,\n        total_amount * 1.05 AS total_with_tax\n    FROM raw_orders\n)\n\nSELECT * FROM transformed`,
-            dbt_yaml: `version: 2\nmodels:\n  - name: fct_revenue\n    description: Synthesized by Synex`
-          }
-        })
-        setSelectedUrn(
-          'urn:li:dataset:(snowflake,prod.sales.fct_revenue)',
-          ['customer_email', 'phone_number']
-        )
-        setLoading(false)
-      }, 4000)
+      updateAgentMessage(agentMsgId, {
+        status: 'FAILED',
+        text: `Execution Error: ${err.message}`,
+        steps: [
+          { step: 1, type: 'ERROR', message: `[${now()}] ERROR: ${err.message}` }
+        ]
+      })
+    } finally {
+      setLoading(false)
     }
   }
 
