@@ -1,13 +1,16 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Filter, Calendar, RefreshCw, Copy, CheckCircle2, XCircle, Loader2, Database, AlertCircle } from 'lucide-react'
+import { Filter, RefreshCw, Copy, CheckCircle2, Loader2, Database, AlertCircle, Download, Check } from 'lucide-react'
 
 export default function HistoryPage() {
   const [runs, setRuns] = useState<any[]>([])
   const [selectedRun, setSelectedRun] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL')
+  const [copiedId, setCopiedId] = useState(false)
 
   const fetchHistory = async () => {
     setLoading(true)
@@ -35,8 +38,52 @@ export default function HistoryPage() {
   const successCount = runs.filter(r => r.status?.toLowerCase() === 'completed' || r.status?.toLowerCase() === 'success').length
   const successRate = runs.length > 0 ? ((successCount / runs.length) * 100).toFixed(1) : '100.0'
 
+  const filteredRuns = runs.filter(run => {
+    const matchesSearch = (run.prompt || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (run.target_name || '').toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === 'ALL' || 
+                          (statusFilter === 'COMPLETED' && (run.status?.toLowerCase() === 'completed' || run.status?.toLowerCase() === 'success')) ||
+                          (statusFilter === 'FAILED' && run.status?.toLowerCase() === 'failed')
+    return matchesSearch && matchesStatus
+  })
+
+  const exportCSV = () => {
+    if (runs.length === 0) return
+    const headers = ['Run ID', 'Status', 'Prompt', 'Target URN', 'Created At']
+    const rows = runs.map(r => [
+      `"${r.id || ''}"`,
+      `"${r.status || ''}"`,
+      `"${(r.prompt || '').replace(/"/g, '""')}"`,
+      `"${r.target_urn || ''}"`,
+      `"${r.created_at || ''}"`
+    ])
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+    const encodedUri = encodeURI(csvContent)
+    const link = document.createElement('a')
+    link.setAttribute('href', encodedUri)
+    link.setAttribute('download', 'synex_execution_history.csv')
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="flex flex-col h-full bg-background p-6 overflow-hidden">
+      {/* Header */}
+      <header className="mb-6 shrink-0 flex justify-between items-center">
+        <div>
+          <h1 className="text-xl font-bold text-white tracking-wide font-display">Execution Run History</h1>
+          <p className="text-sm text-gray-400 font-sans">Audit past data modeling tasks, synthesized contracts, and trace logs.</p>
+        </div>
+        <button 
+          onClick={exportCSV}
+          disabled={runs.length === 0}
+          className="bg-primary hover:bg-primaryHover text-white font-bold text-xs px-4 py-2 rounded-xl transition flex items-center gap-2 shadow-lg disabled:opacity-40 font-sans cursor-pointer"
+        >
+          <Download className="w-4 h-4" /> Export CSV
+        </button>
+      </header>
+
       {/* Top Metrics Cards */}
       <div className="grid grid-cols-3 gap-6 mb-6 shrink-0">
         <div className="bg-surface border border-surfaceBorder rounded-xl p-5 shadow-lg relative overflow-hidden">
@@ -46,11 +93,11 @@ export default function HistoryPage() {
           </div>
           <div className="flex items-end gap-4">
             <div className="w-16 h-16 rounded-full border-[4px] border-success border-r-surfaceBorder flex items-center justify-center">
-              <span className="text-xs font-bold text-gray-300">{successRate}%</span>
+              <span className="text-xs font-bold text-gray-300 font-mono">{successRate}%</span>
             </div>
             <div>
-              <div className="text-3xl font-bold text-white">{successRate}%</div>
-              <div className="text-xs text-gray-500 font-mono">Live from Supabase</div>
+              <div className="text-3xl font-bold text-white font-display">{successRate}%</div>
+              <div className="text-xs text-gray-500 font-mono">Real-Time Telemetry</div>
             </div>
           </div>
         </div>
@@ -60,8 +107,8 @@ export default function HistoryPage() {
             <h3 className="text-xs font-mono text-gray-400 uppercase tracking-widest">Recorded Runs</h3>
             <Database className="w-5 h-5 text-accent" />
           </div>
-          <div className="text-3xl font-bold text-accent mb-2">{runs.length}</div>
-          <div className="text-xs text-gray-500 font-mono">Total executions saved</div>
+          <div className="text-3xl font-bold text-accent mb-2 font-display">{runs.length}</div>
+          <div className="text-xs text-gray-500 font-mono">Total executions recorded</div>
         </div>
 
         <div className="bg-surface border border-surfaceBorder rounded-xl p-5 shadow-lg">
@@ -69,11 +116,37 @@ export default function HistoryPage() {
             <h3 className="text-xs font-mono text-gray-400 uppercase tracking-widest">Backend Connection</h3>
             <span className={`w-3 h-3 rounded-full ${error ? 'bg-danger' : 'bg-success animate-pulse'}`} />
           </div>
-          <div className="text-lg font-bold text-white mb-1">{error ? 'DISCONNECTED' : 'SUPABASE CONNECTED'}</div>
+          <div className="text-lg font-bold text-white mb-1 font-sans">{error ? 'DISCONNECTED' : 'VAULT SYNC LIVE'}</div>
           <div className="text-xs text-gray-500 font-mono">
-            {error ? 'Check backend server status' : 'synex_runs table active'}
+            {error ? 'Check server connection' : 'Audit telemetry stream active'}
           </div>
         </div>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="flex justify-between items-center bg-surface border border-surfaceBorder rounded-xl p-3 mb-6 shrink-0">
+        <div className="flex gap-4 items-center">
+          <div className="flex items-center gap-2 text-xs text-gray-400 font-sans">
+            <Filter className="w-4 h-4 text-primary" /> Filter:
+          </div>
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-[#0A0E17] border border-surfaceBorder text-gray-200 text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:border-primary transition cursor-pointer font-sans"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="FAILED">Failed</option>
+          </select>
+        </div>
+
+        <input 
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search prompts or models..."
+          className="bg-[#0A0E17] border border-surfaceBorder rounded-lg px-4 py-1.5 text-xs text-white placeholder-gray-500 w-72 focus:outline-none focus:border-primary transition font-sans"
+        />
       </div>
 
       {/* Main Split View */}
@@ -81,8 +154,8 @@ export default function HistoryPage() {
         {/* Left Table */}
         <div className="col-span-5 bg-surface border border-surfaceBorder rounded-xl shadow-lg flex flex-col overflow-hidden">
           <div className="flex justify-between items-center p-4 border-b border-surfaceBorder">
-            <h3 className="text-xs font-bold text-white tracking-widest uppercase">Execution Log History</h3>
-            <button onClick={fetchHistory} className="p-1 rounded hover:bg-surfaceBorder text-gray-400 hover:text-white transition">
+            <h3 className="text-xs font-bold text-white tracking-widest uppercase font-mono">Execution Log History</h3>
+            <button onClick={fetchHistory} className="p-1 rounded hover:bg-surfaceBorder text-gray-400 hover:text-white transition" title="Refresh Log">
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             </button>
           </div>
@@ -101,11 +174,11 @@ export default function HistoryPage() {
                 Retry Connection
               </button>
             </div>
-          ) : runs.length === 0 ? (
+          ) : filteredRuns.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
               <Database className="w-8 h-8 text-gray-600 mb-3" />
-              <p className="text-sm text-gray-400 font-semibold mb-1">No Runs Logged Yet</p>
-              <p className="text-xs text-gray-500 max-w-xs">Run a prompt in the Workspace Studio to see your execution history here.</p>
+              <p className="text-sm text-gray-400 font-semibold mb-1">No Runs Found</p>
+              <p className="text-xs text-gray-500 max-w-xs font-sans">No execution logs match your search filter.</p>
             </div>
           ) : (
             <div className="flex-1 overflow-auto custom-scrollbar">
@@ -117,7 +190,7 @@ export default function HistoryPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {runs.map((run) => (
+                  {filteredRuns.map((run) => (
                     <tr 
                       key={run.id} 
                       onClick={() => setSelectedRun(run)}
@@ -129,7 +202,7 @@ export default function HistoryPage() {
                           <span className={`text-[10px] font-mono uppercase ${run.status === 'completed' || run.status === 'SUCCESS' ? 'text-success' : 'text-danger'}`}>{run.status}</span>
                         </div>
                       </td>
-                      <td className="p-3 text-xs text-gray-300 truncate max-w-[180px]">{run.prompt}</td>
+                      <td className="p-3 text-xs text-gray-300 truncate max-w-[180px] font-sans">{run.prompt}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -144,18 +217,31 @@ export default function HistoryPage() {
             <>
               <div className="flex justify-between items-center p-4 border-b border-surfaceBorder bg-[#0A0E17]">
                 <div>
-                  <h2 className="text-sm font-bold text-white tracking-wide">Run ID: {selectedRun.id}</h2>
+                  <h2 className="text-sm font-bold text-white tracking-wide font-mono">Run ID: {selectedRun.id}</h2>
                   <p className="text-[10px] text-gray-500 font-mono mt-0.5">{selectedRun.created_at || 'Just now'}</p>
                 </div>
-                <span className="bg-surfaceBorder px-2.5 py-1 rounded text-xs font-mono text-accent">
-                  {selectedRun.target_name || 'Synthesized Model'}
-                </span>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedRun.id || '')
+                      setCopiedId(true)
+                      setTimeout(() => setCopiedId(false), 2000)
+                    }}
+                    className="p-1.5 rounded hover:bg-surfaceBorder text-gray-400 hover:text-white transition"
+                    title="Copy Run ID"
+                  >
+                    {copiedId ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                  <span className="bg-surfaceBorder px-2.5 py-1 rounded text-xs font-mono text-accent">
+                    {selectedRun.target_name || 'Synthesized Model'}
+                  </span>
+                </div>
               </div>
 
               <div className="flex-1 overflow-auto custom-scrollbar p-6 space-y-6">
                 {/* Original Prompt */}
                 <div>
-                  <h3 className="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-2">Original Prompt</h3>
+                  <h3 className="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-2 font-mono">Original Prompt</h3>
                   <div className="bg-[#0A0E17] border border-surfaceBorder rounded p-4 text-sm text-gray-200 font-sans">
                     "{selectedRun.prompt}"
                   </div>
@@ -164,7 +250,7 @@ export default function HistoryPage() {
                 {/* Generated SQL */}
                 {selectedRun.sql && (
                   <div>
-                    <h3 className="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-2">Synthesized SQL</h3>
+                    <h3 className="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-2 font-mono">Synthesized SQL</h3>
                     <div className="bg-[#0A0E17] border border-surfaceBorder rounded p-4 font-mono text-xs text-gray-300 overflow-x-auto max-h-48">
                       <pre>{selectedRun.sql}</pre>
                     </div>
@@ -174,7 +260,7 @@ export default function HistoryPage() {
                 {/* Generated dbt YAML */}
                 {selectedRun.dbt_yaml && (
                   <div>
-                    <h3 className="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-2">dbt Contract (schema.yml)</h3>
+                    <h3 className="text-[10px] font-bold text-gray-500 tracking-widest uppercase mb-2 font-mono">dbt Contract (schema.yml)</h3>
                     <div className="bg-[#0A0E17] border border-surfaceBorder rounded p-4 font-mono text-xs text-accent overflow-x-auto max-h-36">
                       <pre>{selectedRun.dbt_yaml}</pre>
                     </div>

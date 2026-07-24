@@ -26,6 +26,8 @@ class SettingsPayload(BaseModel):
     datahub_gms_url: str | None = None
     snowflake_account: str | None = None
     openai_api_key: str | None = None
+    llm_provider: str | None = None
+    llm_model: str | None = None
 
 
 @router.get("/history")

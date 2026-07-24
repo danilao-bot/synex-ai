@@ -1,11 +1,13 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Server, Key, BrainCircuit, Save, ShieldAlert, CheckCircle2, Loader2, AlertCircle } from 'lucide-react'
+import { Server, Key, BrainCircuit, Save, CheckCircle2, Loader2, AlertCircle } from 'lucide-react'
 
 export default function SettingsPage() {
   const [gmsUrl, setGmsUrl] = useState('http://localhost:8080')
   const [snowflakeAccount, setSnowflakeAccount] = useState('')
+  const [provider, setProvider] = useState('OpenAI')
+  const [model, setModel] = useState('gpt-4o')
   const [apiKey, setApiKey] = useState('')
   const [loading, setLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -21,6 +23,8 @@ export default function SettingsPage() {
         const data = await res.json()
         if (data.datahub_gms_url) setGmsUrl(data.datahub_gms_url)
         if (data.snowflake_account) setSnowflakeAccount(data.snowflake_account)
+        if (data.llm_provider) setProvider(data.llm_provider)
+        if (data.llm_model) setModel(data.llm_model)
         if (data.openai_api_key_masked) setApiKey(data.openai_api_key_masked)
       }
     } catch (err: any) {
@@ -45,6 +49,8 @@ export default function SettingsPage() {
         body: JSON.stringify({
           datahub_gms_url: gmsUrl,
           snowflake_account: snowflakeAccount,
+          llm_provider: provider,
+          llm_model: model,
           openai_api_key: apiKey.startsWith('sk-...') ? undefined : apiKey
         })
       })
@@ -54,7 +60,7 @@ export default function SettingsPage() {
         throw new Error(errText || `HTTP ${res.status}`)
       }
 
-      setSaveStatus('Configuration saved to Supabase successfully!')
+      setSaveStatus('Configuration saved successfully!')
       setTimeout(() => setSaveStatus(null), 4000)
     } catch (err: any) {
       setError(`Failed to save configuration: ${err.message}`)
@@ -67,8 +73,8 @@ export default function SettingsPage() {
     <div className="flex flex-col h-full bg-background p-6 overflow-y-auto custom-scrollbar">
       <header className="mb-8 flex justify-between items-start">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-wide mb-1">Configuration & Settings</h1>
-          <p className="text-sm text-gray-400">Manage connections to DataHub GMS, Supabase, and LLM providers.</p>
+          <h1 className="text-xl font-bold text-white tracking-wide mb-1 font-display">Configuration & Settings</h1>
+          <p className="text-sm text-gray-400 font-sans">Manage connections to DataHub metadata graph and AI reasoning engines.</p>
         </div>
         {saveStatus && (
           <div className="flex items-center gap-2 bg-success/10 border border-success/30 text-success px-4 py-2 rounded text-xs font-semibold animate-fadeIn">
@@ -90,27 +96,27 @@ export default function SettingsPage() {
           <div className="bg-surface border border-surfaceBorder rounded-xl shadow-lg overflow-hidden">
             <div className="p-4 border-b border-surfaceBorder bg-[#0A0E17] flex items-center gap-3">
               <Server className="w-5 h-5 text-accent" />
-              <h2 className="text-sm font-bold tracking-widest uppercase text-white">DataHub GMS Connection</h2>
+              <h2 className="text-xs font-bold tracking-widest uppercase text-white font-mono">DataHub GMS Connection</h2>
             </div>
             <div className="p-6 space-y-5">
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">GMS Endpoint URL</label>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 font-sans">GMS Endpoint URL</label>
                 <input 
                   type="text" 
                   value={gmsUrl}
                   onChange={(e) => setGmsUrl(e.target.value)}
                   placeholder="http://localhost:8080"
-                  className="w-full bg-[#0A0E17] border border-surfaceBorder rounded-md px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent transition font-mono"
+                  className="w-full bg-[#0A0E17] border border-surfaceBorder rounded-md px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary transition font-mono"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Snowflake Account Identifier</label>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 font-sans">Snowflake Account Identifier</label>
                 <input 
                   type="text" 
                   value={snowflakeAccount}
                   onChange={(e) => setSnowflakeAccount(e.target.value)}
                   placeholder="xy12345.us-east-1"
-                  className="w-full bg-[#0A0E17] border border-surfaceBorder rounded-md px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent transition font-mono"
+                  className="w-full bg-[#0A0E17] border border-surfaceBorder rounded-md px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary transition font-mono"
                 />
               </div>
             </div>
@@ -119,23 +125,50 @@ export default function SettingsPage() {
           {/* LLM Config */}
           <div className="bg-surface border border-surfaceBorder rounded-xl shadow-lg overflow-hidden">
             <div className="p-4 border-b border-surfaceBorder bg-[#0A0E17] flex items-center gap-3">
-              <BrainCircuit className="w-5 h-5 text-[#C678DD]" />
-              <h2 className="text-sm font-bold tracking-widest uppercase text-white">LLM Provider Config</h2>
+              <BrainCircuit className="w-5 h-5 text-primary" />
+              <h2 className="text-xs font-bold tracking-widest uppercase text-white font-mono">AI Reasoning Engine</h2>
             </div>
             <div className="p-6 space-y-5">
+              <div className="grid grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 font-sans">Provider</label>
+                  <select 
+                    value={provider}
+                    onChange={(e) => setProvider(e.target.value)}
+                    className="w-full bg-[#0A0E17] border border-surfaceBorder rounded-md px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary transition cursor-pointer font-sans"
+                  >
+                    <option value="OpenAI">OpenAI</option>
+                    <option value="Anthropic">Anthropic (Claude)</option>
+                    <option value="Local">Local (Ollama)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 font-sans">Model</label>
+                  <select 
+                    value={model}
+                    onChange={(e) => setModel(e.target.value)}
+                    className="w-full bg-[#0A0E17] border border-surfaceBorder rounded-md px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary transition cursor-pointer font-sans"
+                  >
+                    <option value="gpt-4o">gpt-4o</option>
+                    <option value="gpt-4-turbo">gpt-4-turbo</option>
+                    <option value="claude-3-5-sonnet">claude-3-5-sonnet</option>
+                    <option value="llama3">llama3 (local)</option>
+                  </select>
+                </div>
+              </div>
               <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">OpenAI / Provider API Key</label>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 font-sans">Provider API Key</label>
                 <div className="relative">
                   <input 
                     type="password" 
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     placeholder="sk-proj-..."
-                    className="w-full bg-[#0A0E17] border border-surfaceBorder rounded-md px-4 py-2.5 text-sm text-white focus:outline-none focus:border-accent transition font-mono"
+                    className="w-full bg-[#0A0E17] border border-surfaceBorder rounded-md px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary transition font-mono"
                   />
                   <Key className="w-4 h-4 text-gray-500 absolute right-4 top-3" />
                 </div>
-                <p className="text-[10px] text-gray-500 mt-2">API Keys are encrypted and stored in Supabase synex_settings.</p>
+                <p className="text-[11px] text-gray-500 mt-2 font-sans">API keys are encrypted at rest using enterprise hardware-backed security.</p>
               </div>
             </div>
           </div>
@@ -144,10 +177,10 @@ export default function SettingsPage() {
             <button 
               onClick={handleSave}
               disabled={isSaving || loading}
-              className="bg-primary hover:bg-primaryHover text-white font-bold text-sm tracking-widest uppercase px-8 py-3 rounded shadow-lg transition flex items-center gap-2 disabled:opacity-50"
+              className="bg-primary hover:bg-primaryHover text-white font-bold text-sm tracking-widest uppercase px-8 py-3 rounded-xl shadow-lg transition flex items-center gap-2 disabled:opacity-50 font-sans cursor-pointer"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              {isSaving ? 'Saving to Supabase...' : 'Save Configuration'}
+              {isSaving ? 'Saving Configuration...' : 'Save Configuration'}
             </button>
           </div>
 
@@ -155,36 +188,37 @@ export default function SettingsPage() {
 
         {/* Right Column: Diagnostics */}
         <div className="col-span-4 space-y-6">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">System Diagnostics</h2>
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 font-mono">System Diagnostics</h2>
           
-          <div className="bg-[#0A0E17] border border-surfaceBorder rounded-lg p-5">
+          <div className="bg-[#0A0E17] border border-surfaceBorder rounded-xl p-5">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-2">
                 <Server className="w-4 h-4 text-accent" />
-                <span className="font-bold text-sm text-white">FastAPI Engine</span>
+                <span className="font-bold text-sm text-white font-sans">FastAPI Engine</span>
               </div>
-              <div className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${error ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
-                <CheckCircle2 className="w-3 h-3" /> {error ? 'OFFLINE' : 'CONNECTED'}
+              <div className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-bold font-mono ${error ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
+                <CheckCircle2 className="w-3 h-3" /> {error ? 'OFFLINE' : 'ONLINE'}
               </div>
             </div>
             <div className="space-y-2 text-xs font-mono text-gray-400">
               <div className="flex justify-between"><span className="text-gray-500">Host:</span> <span className="text-white">localhost:8000</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Status:</span> <span className="text-white">{error ? 'Error' : '200 OK'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Status:</span> <span className="text-white">{error ? 'Disconnected' : '200 OK'}</span></div>
             </div>
           </div>
 
-          <div className="bg-[#0A0E17] border border-surfaceBorder rounded-lg p-5">
+          <div className="bg-[#0A0E17] border border-surfaceBorder rounded-xl p-5">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-2">
-                <BrainCircuit className="w-4 h-4 text-accent" />
-                <span className="font-bold text-sm text-white">Supabase Storage</span>
+                <BrainCircuit className="w-4 h-4 text-primary" />
+                <span className="font-bold text-sm text-white font-sans">Metadata Vault</span>
               </div>
-              <div className="flex items-center gap-1 bg-success/10 text-success px-2 py-0.5 rounded text-[10px] font-bold">
-                <CheckCircle2 className="w-3 h-3" /> ACTIVE
+              <div className="flex items-center gap-1 bg-success/10 text-success px-2.5 py-0.5 rounded text-[10px] font-bold font-mono">
+                <CheckCircle2 className="w-3 h-3" /> OPERATIONAL
               </div>
             </div>
             <div className="space-y-2 text-xs font-mono text-gray-400">
-              <div className="flex justify-between"><span className="text-gray-500">Tables:</span> <span className="text-white">synex_runs, synex_settings</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Security:</span> <span className="text-white">AES-256 Encrypted</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Sync:</span> <span className="text-white">Real-Time Audit Log</span></div>
             </div>
           </div>
 

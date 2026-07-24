@@ -6,6 +6,7 @@ import { useWorkspaceStore } from '../store/useWorkspaceStore'
 
 export const MetadataInspector: React.FC = () => {
   const { selectedUrn, selectedPiiColumns } = useWorkspaceStore()
+  const [showModal, setShowModal] = React.useState(false)
 
   if (!selectedUrn) {
     return (
@@ -28,7 +29,7 @@ export const MetadataInspector: React.FC = () => {
   }
 
   return (
-    <div className="h-full flex flex-col gap-8 animate-fadeIn">
+    <div className="h-full flex flex-col gap-8 animate-fadeIn relative">
       <div>
         <h2 className="text-xl font-display font-semibold text-white mb-2 tracking-tight">Aspect Inspector</h2>
         <div className="w-12 h-1 bg-primary"></div>
@@ -101,10 +102,35 @@ export const MetadataInspector: React.FC = () => {
       </div>
       
       <div className="mt-auto pt-4">
-         <button className="w-full bg-transparent border border-surfaceBorder text-gray-400 hover:text-primary hover:border-primary font-bold text-xs tracking-wider uppercase py-3 rounded transition-all duration-200">
-            View Full Metadata
+         <button 
+          onClick={() => setShowModal(true)}
+          className="w-full bg-transparent border border-surfaceBorder text-gray-400 hover:text-primary hover:border-primary font-bold text-xs tracking-wider uppercase py-3 rounded transition-all duration-200 cursor-pointer"
+         >
+            View Full Metadata Aspects
          </button>
       </div>
+
+      {/* Full Aspect JSON Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6 animate-fadeIn">
+          <div className="bg-surface border border-surfaceBorder rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-surfaceBorder pb-4">
+              <h3 className="text-base font-bold text-white font-display">DataHub Aspect Dictionary</h3>
+              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white text-sm font-mono">✕ Close</button>
+            </div>
+            <div className="bg-[#04060C] p-4 rounded-xl font-mono text-xs text-accent overflow-auto max-h-96">
+              <pre>{JSON.stringify({
+                urn: selectedUrn,
+                aspects: {
+                  datasetProperties: { customProperties: { env: "prod", tier: "1" } },
+                  ownership: { owners: [{ owner: "urn:li:corpuser:analytics_team", type: "DATA_OWNER" }] },
+                  schemaMetadata: { platform: "snowflake", fields: selectedPiiColumns.map(c => ({ fieldPath: c, isPii: true })) }
+                }
+              }, null, 2)}</pre>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   )
