@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Synex Auditing Control Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #081425;
+            color: #d8e3fb;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid #3b494c;
+            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.3);
+        }
+        .technical-border {
+            border: 1px solid #1f2a3c;
+        }
+        .glow-cyan {
+            box-shadow: 0 0 15px rgba(0, 218, 243, 0.15);
+        }
+        .code-block {
+            font-family: 'JetBrains Mono', monospace;
+            background: #040e1f;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a3548;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3b494c;
+        }
+        .spinner {
+            animation: rotate 2s linear infinite;
+        }
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "error-container": "#93000a",
+                      "tertiary-container": "#00ee98",
+                      "surface-container-highest": "#2a3548",
+                      "surface": "#081425",
+                      "surface-container": "#152031",
+                      "on-error": "#690005",
+                      "surface-tint": "#00daf3",
+                      "surface-dim": "#081425",
+                      "secondary-fixed": "#e8ddff",
+                      "surface-container-high": "#1f2a3c",
+                      "on-tertiary-fixed": "#002111",
+                      "on-tertiary": "#003920",
+                      "on-error-container": "#ffdad6",
+                      "on-surface": "#d8e3fb",
+                      "primary": "#c3f5ff",
+                      "surface-variant": "#2a3548",
+                      "outline": "#849396",
+                      "on-surface-variant": "#bac9cc",
+                      "primary-fixed-dim": "#00daf3",
+                      "surface-container-lowest": "#040e1f",
+                      "inverse-surface": "#d8e3fb",
+                      "primary-fixed": "#9cf0ff",
+                      "on-tertiary-container": "#00673f",
+                      "surface-bright": "#2f3a4c",
+                      "secondary-fixed-dim": "#cebdff",
+                      "outline-variant": "#3b494c",
+                      "on-secondary": "#381385",
+                      "surface-container-low": "#111c2d",
+                      "secondary": "#cebdff",
+                      "inverse-primary": "#006875",
+                      "on-background": "#d8e3fb",
+                      "primary-container": "#00e5ff",
+                      "error": "#ffb4ab",
+                      "on-primary-container": "#00626e",
+                      "secondary-container": "#4f319c",
+                      "on-secondary-fixed": "#21005e",
+                      "on-secondary-container": "#bea8ff",
+                      "on-secondary-fixed-variant": "#4f319c",
+                      "on-primary-fixed-variant": "#004f58",
+                      "tertiary-fixed": "#52ffac",
+                      "tertiary-fixed-dim": "#00e291",
+                      "on-tertiary-fixed-variant": "#005231",
+                      "on-primary-fixed": "#001f24",
+                      "background": "#081425",
+                      "tertiary": "#abffcb",
+                      "on-primary": "#00363d",
+                      "inverse-on-surface": "#263143"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "unit": "4px",
+                      "margin-desktop": "32px",
+                      "container-max": "1440px",
+                      "gutter": "16px",
+                      "margin-mobile": "16px"
+              },
+              "fontFamily": {
+                      "metadata": ["JetBrains Mono"],
+                      "headline-sm": ["Inter"],
+                      "headline-lg": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "code-md": ["JetBrains Mono"],
+                      "body-md": ["Inter"],
+                      "label-caps": ["JetBrains Mono"]
+              },
+              "fontSize": {
+                      "metadata": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                      "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "code-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+</head>
+<body class="min-h-screen">
+<!-- Top AppBar Component -->
+<header class="fixed top-0 w-full bg-surface/80 dark:bg-surface/80 backdrop-blur-md text-primary-fixed-dim border-b border-outline-variant/30 shadow-[0_1px_20px_rgba(0,0,0,0.4)] flex justify-between items-center px-margin-desktop h-16 z-50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-fixed-dim" style="font-variation-settings: 'FILL' 1;">terminal</span>
+<h1 class="font-headline-md text-headline-md font-bold tracking-tighter text-primary-fixed-dim drop-shadow-[0_0_8px_rgba(0,218,243,0.5)]">Synex</h1>
+</div>
+<nav class="hidden md:flex gap-8">
+<a class="font-label-caps text-label-caps text-primary-fixed-dim border-b-2 border-primary-fixed-dim py-5" href="#">Workspace</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:bg-surface-variant/50 transition-colors py-5 px-2" href="#">Lineage</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:bg-surface-variant/50 transition-colors py-5 px-2" href="#">Editor</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:bg-surface-variant/50 transition-colors py-5 px-2" href="#">Inspector</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="font-label-caps text-label-caps text-on-primary-container bg-primary-container px-4 py-1.5 rounded-lg font-bold transition-transform scale-95 active:scale-90">Healthy</button>
+<span class="material-symbols-outlined text-on-surface-variant">account_circle</span>
+</div>
+</header>
+<!-- Sidebar Navigation Drawer -->
+<aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-low/90 dark:bg-surface-container-low/90 backdrop-blur-xl border-r border-outline-variant/20 shadow-2xl flex flex-col py-24 gap-4 z-40 hidden xl:flex">
+<div class="px-6 mb-4">
+<span class="font-headline-sm text-headline-sm font-black text-surface-tint">Synex AI</span>
+</div>
+<div class="space-y-1 px-4">
+<button class="w-full flex items-center gap-4 px-4 py-3 bg-secondary-container text-on-secondary-container rounded-lg font-bold transition-all hover:translate-x-1 duration-200">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-caps text-label-caps">Workspace</span>
+</button>
+<button class="w-full flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/30 rounded-lg transition-all hover:translate-x-1 duration-200">
+<span class="material-symbols-outlined">account_tree</span>
+<span class="font-label-caps text-label-caps">Lineage</span>
+</button>
+<button class="w-full flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/30 rounded-lg transition-all hover:translate-x-1 duration-200">
+<span class="material-symbols-outlined">code</span>
+<span class="font-label-caps text-label-caps">Editor</span>
+</button>
+<button class="w-full flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/30 rounded-lg transition-all hover:translate-x-1 duration-200">
+<span class="material-symbols-outlined">info</span>
+<span class="font-label-caps text-label-caps">Inspector</span>
+</button>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="xl:ml-64 pt-20 pb-24 px-margin-desktop min-h-screen">
+<!-- KPI Row -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-8">
+<div class="glass-panel p-5 rounded-xl glow-cyan group transition-all duration-300 hover:scale-[1.01]">
+<div class="flex justify-between items-start mb-2">
+<p class="font-label-caps text-label-caps text-outline">Success Rate</p>
+<span class="material-symbols-outlined text-tertiary-container">verified</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative w-16 h-16 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-variant" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" stroke-width="4"></circle>
+<circle class="text-tertiary-container" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" stroke-dasharray="176" stroke-dashoffset="2.8" stroke-width="4"></circle>
+</svg>
+<span class="absolute font-metadata text-metadata">98%</span>
+</div>
+<div>
+<p class="font-headline-lg text-headline-lg text-tertiary">98.4%</p>
+<p class="font-metadata text-metadata text-outline-variant">+0.2% from yesterday</p>
+</div>
+</div>
+</div>
+<div class="glass-panel p-5 rounded-xl glow-cyan group transition-all duration-300 hover:scale-[1.01]">
+<div class="flex justify-between items-start mb-2">
+<p class="font-label-caps text-label-caps text-outline">Avg Gen Time</p>
+<span class="material-symbols-outlined text-primary-fixed-dim">speed</span>
+</div>
+<div class="flex flex-col gap-1">
+<p class="font-headline-lg text-headline-lg text-primary-fixed-dim">1.4s</p>
+<div class="h-12 w-full mt-2">
+<svg class="w-full h-full" viewbox="0 0 100 30">
+<path d="M0 20 Q 10 5, 20 15 T 40 10 T 60 25 T 80 5 T 100 15" fill="none" stroke="#00daf3" stroke-width="2"></path>
+</svg>
+</div>
+</div>
+</div>
+<div class="glass-panel p-5 rounded-xl glow-cyan group transition-all duration-300 hover:scale-[1.01]">
+<div class="flex justify-between items-start mb-2">
+<p class="font-label-caps text-label-caps text-outline">MCPs Emitted</p>
+<span class="material-symbols-outlined text-secondary">database</span>
+</div>
+<div class="flex flex-col">
+<p class="font-headline-lg text-headline-lg text-secondary">412</p>
+<div class="flex items-center gap-2 mt-2">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest border border-outline-variant flex items-center justify-center font-metadata text-[10px]">BQ</div>
+<div class="w-6 h-6 rounded-full bg-surface-container-highest border border-outline-variant flex items-center justify-center font-metadata text-[10px]">SF</div>
+<div class="w-6 h-6 rounded-full bg-surface-container-highest border border-outline-variant flex items-center justify-center font-metadata text-[10px]">RD</div>
+</div>
+<p class="font-metadata text-metadata text-outline">across 8 platforms</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Filter Bar -->
+<section class="glass-panel rounded-lg p-3 mb-8 flex flex-wrap items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1.5 bg-surface-container-lowest border border-outline-variant/30 rounded-md">
+<span class="material-symbols-outlined text-outline text-sm">filter_alt</span>
+<span class="font-label-caps text-label-caps text-on-surface">Platform: All</span>
+<span class="material-symbols-outlined text-outline text-sm">expand_more</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 bg-surface-container-lowest border border-outline-variant/30 rounded-md">
+<span class="font-label-caps text-label-caps text-on-surface">Status: Success</span>
+<span class="material-symbols-outlined text-outline text-sm">expand_more</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 bg-surface-container-lowest border border-outline-variant/30 rounded-md">
+<span class="font-label-caps text-label-caps text-on-surface">Last 24 Hours</span>
+<span class="material-symbols-outlined text-outline text-sm">calendar_month</span>
+</div>
+<div class="ml-auto flex items-center gap-4">
+<div class="relative">
+<input class="bg-surface-container-lowest border border-outline-variant/30 text-body-md font-body-md rounded-md px-10 py-1.5 w-64 focus:ring-1 focus:ring-primary-fixed-dim focus:border-primary-fixed-dim outline-none" placeholder="Search prompts..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-2 text-outline text-sm">search</span>
+</div>
+<button class="bg-primary-container text-on-primary-container font-label-caps text-label-caps px-4 py-2 rounded-md font-bold hover:opacity-90 transition-opacity">EXPORT CSV</button>
+</div>
+</section>
+<!-- Split Panel (Master-Detail) -->
+<section class="flex flex-col lg:flex-row gap-gutter h-[calc(100vh-420px)] min-h-[500px]">
+<!-- Left: High-density Table (45%) -->
+<div class="lg:w-[45%] glass-panel rounded-xl overflow-hidden flex flex-col">
+<div class="bg-surface-container-high px-4 py-3 border-b border-outline-variant/30 flex justify-between items-center">
+<h3 class="font-label-caps text-label-caps text-on-surface">Execution Log</h3>
+<span class="font-metadata text-metadata text-outline">128 Total Runs</span>
+</div>
+<div class="overflow-y-auto flex-grow">
+<table class="w-full text-left border-collapse">
+<thead class="sticky top-0 bg-surface-container-low border-b border-outline-variant/20 z-10">
+<tr>
+<th class="p-3 font-label-caps text-[10px] text-outline uppercase tracking-wider">Status</th>
+<th class="p-3 font-label-caps text-[10px] text-outline uppercase tracking-wider">Prompt</th>
+<th class="p-3 font-label-caps text-[10px] text-outline uppercase tracking-wider">Platform</th>
+<th class="p-3 font-label-caps text-[10px] text-outline uppercase tracking-wider">Timing</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<tr class="hover:bg-surface-variant/30 cursor-pointer transition-colors group">
+<td class="p-3">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary-container shadow-[0_0_8px_#00ee98]"></div>
+<span class="font-metadata text-metadata text-tertiary-container">SUCCESS</span>
+</div>
+</td>
+<td class="p-3">
+<p class="font-body-md text-body-md text-on-surface truncate max-w-[150px]">Get daily active users by region...</p>
+</td>
+<td class="p-3">
+<span class="font-label-caps text-[10px] px-2 py-0.5 bg-surface-variant rounded border border-outline-variant/30">BIGQUERY</span>
+</td>
+<td class="p-3 text-right">
+<p class="font-metadata text-metadata text-outline">1.2s</p>
+</td>
+</tr>
+<tr class="bg-primary/5 border-l-2 border-primary-fixed-dim">
+<td class="p-3">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary-container shadow-[0_0_8px_#00ee98]"></div>
+<span class="font-metadata text-metadata text-tertiary-container">SUCCESS</span>
+</div>
+</td>
+<td class="p-3">
+<p class="font-body-md text-body-md text-on-surface truncate max-w-[150px]">Summarize revenue from Q3 retail...</p>
+</td>
+<td class="p-3">
+<span class="font-label-caps text-[10px] px-2 py-0.5 bg-surface-variant rounded border border-outline-variant/30">SNOWFLAKE</span>
+</td>
+<td class="p-3 text-right">
+<p class="font-metadata text-metadata text-outline">0.9s</p>
+</td>
+</tr>
+<tr class="hover:bg-surface-variant/30 cursor-pointer transition-colors">
+<td class="p-3">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-error shadow-[0_0_8px_#ffb4ab]"></div>
+<span class="font-metadata text-metadata text-error">FAILED</span>
+</div>
+</td>
+<td class="p-3">
+<p class="font-body-md text-body-md text-on-surface truncate max-w-[150px]">Calculate LTV for churning subs...</p>
+</td>
+<td class="p-3">
+<span class="font-label-caps text-[10px] px-2 py-0.5 bg-surface-variant rounded border border-outline-variant/30">REDSHIFT</span>
+</td>
+<td class="p-3 text-right">
+<p class="font-metadata text-metadata text-outline">3.4s</p>
+</td>
+</tr>
+<tr class="hover:bg-surface-variant/30 cursor-pointer transition-colors">
+<td class="p-3">
+<div class="flex items-center gap-2">
+<div class="spinner w-3 h-3 border-2 border-t-secondary-container border-outline-variant rounded-full"></div>
+<span class="font-metadata text-metadata text-secondary">RUNNING</span>
+</div>
+</td>
+<td class="p-3">
+<p class="font-body-md text-body-md text-on-surface truncate max-w-[150px]">Monthly trend of shipping delays...</p>
+</td>
+<td class="p-3">
+<span class="font-label-caps text-[10px] px-2 py-0.5 bg-surface-variant rounded border border-outline-variant/30">SNOWFLAKE</span>
+</td>
+<td class="p-3 text-right">
+<p class="font-metadata text-metadata text-outline">--</p>
+</td>
+</tr>
+<!-- Repeat rows -->
+<tr class="hover:bg-surface-variant/30 cursor-pointer transition-colors">
+<td class="p-3">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary-container"></div>
+<span class="font-metadata text-metadata text-tertiary-container">SUCCESS</span>
+</div>
+</td>
+<td class="p-3">
+<p class="font-body-md text-body-md text-on-surface truncate max-w-[150px]">Inventory audit for west region...</p>
+</td>
+<td class="p-3">
+<span class="font-label-caps text-[10px] px-2 py-0.5 bg-surface-variant rounded border border-outline-variant/30">BIGQUERY</span>
+</td>
+<td class="p-3 text-right">
+<p class="font-metadata text-metadata text-outline">1.5s</p>
+</td>
+</tr>
+<tr class="hover:bg-surface-variant/30 cursor-pointer transition-colors">
+<td class="p-3">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary-container"></div>
+<span class="font-metadata text-metadata text-tertiary-container">SUCCESS</span>
+</div>
+</td>
+<td class="p-3">
+<p class="font-body-md text-body-md text-on-surface truncate max-w-[150px]">User retention cohorts 2023...</p>
+</td>
+<td class="p-3">
+<span class="font-label-caps text-[10px] px-2 py-0.5 bg-surface-variant rounded border border-outline-variant/30">SNOWFLAKE</span>
+</td>
+<td class="p-3 text-right">
+<p class="font-metadata text-metadata text-outline">2.1s</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Right: Detail Panel (55%) -->
+<div class="lg:w-[55%] glass-panel rounded-xl flex flex-col">
+<div class="bg-surface-container-high px-6 py-4 border-b border-outline-variant/30 flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary-fixed-dim">analytics</span>
+<h3 class="font-headline-sm text-headline-sm">Run: snx-8921-v4</h3>
+</div>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-surface-variant/50 rounded-lg transition-colors"><span class="material-symbols-outlined text-sm">content_copy</span></button>
+<button class="p-2 hover:bg-surface-variant/50 rounded-lg transition-colors"><span class="material-symbols-outlined text-sm">refresh</span></button>
+</div>
+</div>
+<div class="p-6 overflow-y-auto space-y-6">
+<!-- Prompt/Overview -->
+<div>
+<p class="font-label-caps text-label-caps text-outline mb-2">ORIGINAL PROMPT</p>
+<p class="font-body-lg text-body-lg text-on-surface bg-surface-container-low p-4 rounded border border-outline-variant/20 italic">
+                            "Summarize revenue from Q3 retail sales, grouping by region and excluding returned items where status is 'REJECTED'."
+                        </p>
+</div>
+<!-- SQL Diff -->
+<div>
+<div class="flex justify-between items-center mb-2">
+<p class="font-label-caps text-label-caps text-outline">GENERATED SQL (DIFF MODE)</p>
+<span class="font-metadata text-metadata text-tertiary-container">Validated AST: OK</span>
+</div>
+<div class="code-block p-4 rounded border border-outline-variant/20 text-code-md">
+<code class="text-on-surface-variant">
+<span class="text-secondary">SELECT</span> region, <span class="text-secondary">SUM</span>(revenue) <span class="text-secondary">AS</span> total_revenue<br/>
+<span class="text-secondary">FROM</span> `synex-prod.retail.sales`<br/>
+<span class="text-secondary">WHERE</span> quarter = 'Q3'<br/>
+<del class="text-error bg-error-container/20 block">- AND return_status != 'CANCELLED'</del>
+<ins class="text-tertiary-container bg-tertiary-container/10 block">+ AND return_status != 'REJECTED'</ins>
+<span class="text-secondary">GROUP BY</span> 1<br/>
+<span class="text-secondary">ORDER BY</span> 2 <span class="text-secondary">DESC</span>;
+                            </code>
+</div>
+</div>
+<!-- MCP Write-back Logs -->
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<p class="font-label-caps text-label-caps text-outline">AST VALIDATION</p>
+<div class="code-block p-3 rounded border border-outline-variant/20 text-[11px] h-32 overflow-hidden">
+<pre class="text-on-tertiary-container">{
+  "status": "VALID",
+  "nodes": 42,
+  "depth": 5,
+  "joins": 0,
+  "latency_ms": 14
+}</pre>
+</div>
+</div>
+<div class="space-y-2">
+<p class="font-label-caps text-label-caps text-outline">MCP EMISSION</p>
+<div class="code-block p-3 rounded border border-outline-variant/20 text-[11px] h-32 overflow-hidden">
+<pre class="text-secondary-fixed-dim">{
+  "id": "mcp_7721_z",
+  "type": "WRITE_BACK",
+  "target": "MetadataRepo",
+  "payload": {
+    "audit_trail": "ENABLED"
+  }
+}</pre>
+</div>
+</div>
+</div>
+<!-- Feedback -->
+<div class="pt-4 border-t border-outline-variant/20">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-tertiary-container">thumb_up</span>
+<span class="font-body-md text-body-md text-on-surface">Auto-validated by System Observer v2.4</span>
+</div>
+<button class="font-label-caps text-label-caps text-primary-fixed border border-primary-fixed/30 px-4 py-2 rounded-md hover:bg-primary-fixed/10 transition-colors">FLAG INCIDENT</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar (Mobile/Responsive) -->
+<nav class="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 rounded-full px-6 py-3 w-[90%] bg-surface-container-lowest/50 backdrop-blur-lg border border-outline-variant/30 shadow-[0_0_30px_rgba(0,218,243,0.15)] flex items-center justify-around z-50">
+<button class="text-primary-fixed-dim scale-110 drop-shadow-[0_0_5px_#00daf3] transition-all">
+<span class="material-symbols-outlined">bolt</span>
+</button>
+<button class="text-outline hover:text-primary transition-all">
+<span class="material-symbols-outlined">analytics</span>
+</button>
+<button class="text-outline hover:text-primary transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="text-outline hover:text-primary transition-all">
+<span class="material-symbols-outlined">help</span>
+</button>
+</nav>
+<!-- Background Atmospheric Effect -->
+<div class="fixed inset-0 -z-10 pointer-events-none opacity-20 overflow-hidden">
+<div class="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary-container/20 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-[10%] right-[10%] w-[30%] h-[30%] bg-secondary-container/20 blur-[100px] rounded-full"></div>
+</div>
+<script>
+        // Micro-interaction for table rows
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('click', () => {
+                // Remove active class from all
+                document.querySelectorAll('tbody tr').forEach(r => {
+                    r.classList.remove('bg-primary/5', 'border-l-2', 'border-primary-fixed-dim');
+                    r.classList.add('hover:bg-surface-variant/30');
+                });
+                // Add to current
+                row.classList.add('bg-primary/5', 'border-l-2', 'border-primary-fixed-dim');
+                row.classList.remove('hover:bg-surface-variant/30');
+                
+                // Visual feedback only for demo
+                console.log('Detail switched to: ' + row.querySelector('.truncate').innerText);
+            });
+        });
+
+        // Simple mock for "Running" status updates
+        setInterval(() => {
+            const runner = document.querySelector('.spinner');
+            if(runner) {
+                // Potential state change animation logic
+            }
+        }, 3000);
+    </script>
+</body></html>

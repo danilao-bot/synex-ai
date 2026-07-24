@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Synex Auditing Control Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "error-container": "#93000a",
+                    "tertiary-container": "#00ee98",
+                    "surface-container-highest": "#2a3548",
+                    "surface": "#081425",
+                    "surface-container": "#152031",
+                    "on-error": "#690005",
+                    "surface-tint": "#00daf3",
+                    "surface-dim": "#081425",
+                    "secondary-fixed": "#e8ddff",
+                    "surface-container-high": "#1f2a3c",
+                    "on-tertiary-fixed": "#002111",
+                    "on-tertiary": "#003920",
+                    "on-error-container": "#ffdad6",
+                    "on-surface": "#d8e3fb",
+                    "primary": "#c3f5ff",
+                    "surface-variant": "#2a3548",
+                    "outline": "#849396",
+                    "on-surface-variant": "#bac9cc",
+                    "primary-fixed-dim": "#00daf3",
+                    "surface-container-lowest": "#040e1f",
+                    "inverse-surface": "#d8e3fb",
+                    "primary-fixed": "#9cf0ff",
+                    "on-tertiary-container": "#00673f",
+                    "surface-bright": "#2f3a4c",
+                    "secondary-fixed-dim": "#cebdff",
+                    "outline-variant": "#3b494c",
+                    "on-secondary": "#381385",
+                    "surface-container-low": "#111c2d",
+                    "secondary": "#cebdff",
+                    "inverse-primary": "#006875",
+                    "on-background": "#d8e3fb",
+                    "primary-container": "#00e5ff",
+                    "error": "#ffb4ab",
+                    "on-primary-container": "#00626e",
+                    "secondary-container": "#4f319c",
+                    "on-secondary-fixed": "#21005e",
+                    "on-secondary-container": "#bea8ff",
+                    "on-secondary-fixed-variant": "#4f319c",
+                    "on-primary-fixed-variant": "#004f58",
+                    "tertiary-fixed": "#52ffac",
+                    "tertiary-fixed-dim": "#00e291",
+                    "on-tertiary-fixed-variant": "#005231",
+                    "on-primary-fixed": "#001f24",
+                    "background": "#081425",
+                    "tertiary": "#abffcb",
+                    "on-primary": "#00363d",
+                    "inverse-on-surface": "#263143"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "unit": "4px",
+                    "margin-desktop": "32px",
+                    "container-max": "1440px",
+                    "gutter": "16px",
+                    "margin-mobile": "16px"
+            },
+            "fontFamily": {
+                    "metadata": ["JetBrains Mono"],
+                    "headline-sm": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "code-md": ["JetBrains Mono"],
+                    "body-md": ["Inter"],
+                    "label-caps": ["JetBrains Mono"]
+            },
+            "fontSize": {
+                    "metadata": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                    "headline-sm": ["18px", {"lineHeight": "24px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "code-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #080B10; /* Matte Obsidian as requested */
+            color: #d8e3fb;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .glass-card {
+            background: rgba(21, 32, 49, 0.4);
+            backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(186, 201, 204, 0.1);
+            border-left: 1px solid rgba(186, 201, 204, 0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #3b494c;
+            border-radius: 10px;
+        }
+        .swipe-action {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .active-swipe {
+            transform: translateX(-100px);
+        }
+        .shader-bg {
+            mask-image: linear-gradient(to bottom, black, transparent);
+            opacity: 0.4;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 px-margin-mobile h-16 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-fixed-dim" data-icon="terminal">terminal</span>
+<h1 class="font-headline-sm text-headline-sm font-bold tracking-tighter text-primary-fixed-dim drop-shadow-[0_0_8px_rgba(0,218,243,0.5)]">Synex</h1>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-label-caps font-label-caps text-tertiary-fixed-dim uppercase">Healthy</span>
+<button class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</button>
+</div>
+</header>
+<main class="mt-16 pb-24 px-margin-mobile pt-6 space-y-8 flex-grow">
+<!-- KPI Horizontal Swiper -->
+<section class="overflow-x-auto custom-scrollbar flex gap-4 snap-x">
+<div class="snap-start shrink-0 w-40 glass-card p-4 rounded-xl border border-outline-variant/20 shadow-lg">
+<p class="text-metadata font-metadata text-outline uppercase mb-1">Success Rate</p>
+<p class="text-headline-md font-headline-md text-tertiary-fixed-dim">98.4%</p>
+<div class="mt-2 h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-tertiary-fixed-dim w-[98%]"></div>
+</div>
+</div>
+<div class="snap-start shrink-0 w-40 glass-card p-4 rounded-xl border border-outline-variant/20 shadow-lg">
+<p class="text-metadata font-metadata text-outline uppercase mb-1">Gen Time</p>
+<p class="text-headline-md font-headline-md text-primary-fixed-dim">1.2s</p>
+<p class="text-metadata font-metadata text-tertiary-fixed-dim flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" data-icon="trending_down">trending_down</span>
+                    -120ms
+                </p>
+</div>
+<div class="snap-start shrink-0 w-40 glass-card p-4 rounded-xl border border-outline-variant/20 shadow-lg">
+<p class="text-metadata font-metadata text-outline uppercase mb-1">Active MCPs</p>
+<p class="text-headline-md font-headline-md text-secondary-fixed-dim">14</p>
+<div class="flex gap-1 mt-2">
+<div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim shadow-[0_0_8px_#00e291]"></div>
+<div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim shadow-[0_0_8px_#00e291]"></div>
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+</div>
+</div>
+</section>
+<!-- Main Task List -->
+<section class="space-y-4">
+<div class="flex justify-between items-center">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Audit Stream</h2>
+<span class="text-metadata font-metadata text-outline">LIVE · 12 EVENTS</span>
+</div>
+<div class="space-y-3">
+<!-- Card Item: Success -->
+<div class="relative group overflow-hidden rounded-xl">
+<div class="absolute inset-y-0 right-0 w-24 bg-primary-container flex items-center justify-center text-on-primary-container z-0 rounded-r-xl">
+<span class="material-symbols-outlined" data-icon="refresh">refresh</span>
+</div>
+<div class="swipe-action relative z-10 glass-card p-4 flex flex-col gap-3 active:scale-[0.98] transition-transform" onclick="toggleDetail()">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary shadow-[0_0_8px_#abffcb]"></div>
+<span class="text-label-caps font-label-caps text-tertiary uppercase">Success</span>
+</div>
+<span class="text-metadata font-metadata text-outline">14:02:11</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface line-clamp-2">Generate optimized PostgreSQL schema for high-concurrency event logging system with partition logic...</p>
+<div class="flex items-center gap-2">
+<div class="bg-surface-container-high px-2 py-0.5 rounded border border-outline-variant/30 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="database">database</span>
+<span class="text-metadata font-metadata text-on-surface-variant">RDS-EU-01</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card Item: Running -->
+<div class="relative group overflow-hidden rounded-xl">
+<div class="absolute inset-y-0 right-0 w-24 bg-primary-container flex items-center justify-center text-on-primary-container z-0 rounded-r-xl">
+<span class="material-symbols-outlined" data-icon="refresh">refresh</span>
+</div>
+<div class="swipe-action relative z-10 glass-card p-4 flex flex-col gap-3 active:scale-[0.98] transition-transform" onclick="toggleDetail()">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_#cebdff] animate-pulse"></div>
+<span class="text-label-caps font-label-caps text-secondary uppercase">Running</span>
+</div>
+<span class="text-metadata font-metadata text-outline">14:01:45</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface line-clamp-2">Analyze network latency spikes between API gateway and downstream microservices cluster...</p>
+<div class="flex items-center gap-2">
+<div class="bg-surface-container-high px-2 py-0.5 rounded border border-outline-variant/30 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="cloud">cloud</span>
+<span class="text-metadata font-metadata text-on-surface-variant">K8S-MAIN</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card Item: Failure -->
+<div class="relative group overflow-hidden rounded-xl">
+<div class="absolute inset-y-0 right-0 w-24 bg-primary-container flex items-center justify-center text-on-primary-container z-0 rounded-r-xl">
+<span class="material-symbols-outlined" data-icon="refresh">refresh</span>
+</div>
+<div class="swipe-action relative z-10 glass-card p-4 flex flex-col gap-3 border-l-2 border-error active:scale-[0.98] transition-transform" onclick="toggleDetail()">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-error shadow-[0_0_8px_#ffb4ab]"></div>
+<span class="text-label-caps font-label-caps text-error uppercase">Failure</span>
+</div>
+<span class="text-metadata font-metadata text-outline">13:58:02</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface line-clamp-2">Execute complex SQL migration script for legacy user profiles table to new encrypted format...</p>
+<div class="flex items-center gap-2">
+<div class="bg-surface-container-high px-2 py-0.5 rounded border border-outline-variant/30 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="shield">shield</span>
+<span class="text-metadata font-metadata text-on-surface-variant">VAULT-02</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Repeat Item for Scroll -->
+<div class="relative group overflow-hidden rounded-xl">
+<div class="absolute inset-y-0 right-0 w-24 bg-primary-container flex items-center justify-center text-on-primary-container z-0 rounded-r-xl">
+<span class="material-symbols-outlined" data-icon="refresh">refresh</span>
+</div>
+<div class="swipe-action relative z-10 glass-card p-4 flex flex-col gap-3 active:scale-[0.98] transition-transform" onclick="toggleDetail()">
+<div class="flex justify-between items-start">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-tertiary shadow-[0_0_8px_#abffcb]"></div>
+<span class="text-label-caps font-label-caps text-tertiary uppercase">Success</span>
+</div>
+<span class="text-metadata font-metadata text-outline">13:45:00</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface line-clamp-2">Validate data integrity across shard-04 and shard-05 after replication lag resolution...</p>
+<div class="flex items-center gap-2">
+<div class="bg-surface-container-high px-2 py-0.5 rounded border border-outline-variant/30 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="memory">memory</span>
+<span class="text-metadata font-metadata text-on-surface-variant">DB-SHARD</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-primary-container text-on-primary-container rounded-full shadow-[0_4px_20px_rgba(0,229,255,0.4)] flex items-center justify-center active:scale-90 transition-transform z-40" onclick="toggleFilters()">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 rounded-full px-6 py-3 w-[90%] glass-card flex items-center justify-around z-50 border border-outline-variant/30 shadow-[0_0_30px_rgba(0,218,243,0.15)]">
+<button class="text-primary-fixed-dim scale-110 drop-shadow-[0_0_5px_#00daf3] flex flex-col items-center">
+<span class="material-symbols-outlined" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="text-metadata font-metadata mt-1">Live</span>
+</button>
+<button class="text-outline flex flex-col items-center opacity-60">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="text-metadata font-metadata mt-1">Reports</span>
+</button>
+<button class="text-outline flex flex-col items-center opacity-60">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="text-metadata font-metadata mt-1">Config</span>
+</button>
+<button class="text-outline flex flex-col items-center opacity-60">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span class="text-metadata font-metadata mt-1">Help</span>
+</button>
+</nav>
+<!-- Bottom Drawer: Filters -->
+<div class="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm pointer-events-none opacity-0 transition-opacity flex items-end" id="filter-drawer">
+<div class="w-full bg-surface-container-lowest rounded-t-3xl p-6 transform translate-y-full transition-transform duration-300 pointer-events-auto">
+<div class="w-12 h-1.5 bg-outline-variant/40 rounded-full mx-auto mb-6"></div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-6">Filters</h3>
+<div class="space-y-6">
+<div>
+<label class="text-label-caps font-label-caps text-outline uppercase mb-3 block">Status</label>
+<div class="flex flex-wrap gap-2">
+<span class="px-4 py-2 rounded-full bg-surface-container-high border border-tertiary/20 text-tertiary text-metadata font-metadata">SUCCESS</span>
+<span class="px-4 py-2 rounded-full bg-surface-container-high border border-secondary/20 text-secondary text-metadata font-metadata">RUNNING</span>
+<span class="px-4 py-2 rounded-full bg-surface-container-high border border-error/20 text-error text-metadata font-metadata">FAILURE</span>
+</div>
+</div>
+<div>
+<label class="text-label-caps font-label-caps text-outline uppercase mb-3 block">Platform</label>
+<div class="grid grid-cols-2 gap-3">
+<button class="p-3 bg-surface-container-high rounded-xl border border-outline-variant/30 text-left">
+<span class="text-body-md font-body-md">AWS RDS</span>
+</button>
+<button class="p-3 bg-primary-container/10 rounded-xl border border-primary-container text-left">
+<span class="text-body-md font-body-md text-primary-container">Kubernetes</span>
+</button>
+<button class="p-3 bg-surface-container-high rounded-xl border border-outline-variant/30 text-left">
+<span class="text-body-md font-body-md">Vault</span>
+</button>
+<button class="p-3 bg-surface-container-high rounded-xl border border-outline-variant/30 text-left">
+<span class="text-body-md font-body-md">Snowflake</span>
+</button>
+</div>
+</div>
+<button class="w-full py-4 bg-primary-container text-on-primary-container font-bold rounded-xl mt-4" onclick="toggleFilters()">Apply Filters</button>
+</div>
+</div>
+</div>
+<!-- Detail View: Code Sheet -->
+<div class="fixed inset-0 z-[100] bg-surface transform translate-x-full transition-transform duration-300 overflow-hidden flex flex-col" id="detail-sheet">
+<header class="p-4 border-b border-outline-variant/30 flex justify-between items-center bg-surface-container-low">
+<button class="material-symbols-outlined text-primary" data-icon="arrow_back" onclick="toggleDetail()">arrow_back</button>
+<div class="text-center">
+<p class="text-metadata font-metadata text-outline">AUDIT_LOG_ID: 982-AXP</p>
+<p class="font-headline-sm text-[16px] text-on-surface">SQL Validation Result</p>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant" data-icon="share">share</button>
+</header>
+<div class="flex-grow overflow-y-auto p-4 custom-scrollbar bg-surface-container-lowest">
+<div class="flex gap-4 mb-6">
+<div class="flex-grow glass-card p-3 rounded-lg border border-tertiary/20">
+<p class="text-metadata font-metadata text-tertiary">EXECUTION TIME</p>
+<p class="text-headline-md font-headline-md">1.2ms</p>
+</div>
+<div class="flex-grow glass-card p-3 rounded-lg border border-primary/20">
+<p class="text-metadata font-metadata text-primary">ROWS AFFECTED</p>
+<p class="text-headline-md font-headline-md">0</p>
+</div>
+</div>
+<div class="bg-black/40 rounded-xl p-4 border border-outline-variant/20 mb-6">
+<div class="flex justify-between items-center mb-3">
+<span class="text-label-caps font-label-caps text-outline">SOURCE_PROMPT</span>
+<span class="material-symbols-outlined text-outline text-sm" data-icon="content_copy">content_copy</span>
+</div>
+<p class="text-body-md font-body-md text-on-surface-variant italic">"Create a schema for high-concurrency event logging..."</p>
+</div>
+<div class="relative bg-surface-dim rounded-xl p-4 border border-outline-variant/30 overflow-hidden">
+<div class="shader-bg absolute inset-0">
+
+</div>
+<div class="relative z-10">
+<div class="flex justify-between items-center mb-4">
+<span class="text-label-caps font-label-caps text-tertiary">SQL GENERATED</span>
+<div class="flex gap-2">
+<span class="w-3 h-3 rounded-full bg-red-500/50"></span>
+<span class="w-3 h-3 rounded-full bg-yellow-500/50"></span>
+<span class="w-3 h-3 rounded-full bg-green-500/50"></span>
+</div>
+</div>
+<pre class="font-code-md text-code-md leading-relaxed text-primary-fixed-dim whitespace-pre-wrap"><span class="text-secondary">CREATE TABLE</span> <span class="text-on-surface">events_log</span> (
+    id <span class="text-secondary">UUID PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    event_type <span class="text-secondary">VARCHAR</span>(255) <span class="text-secondary">NOT NULL</span>,
+    payload <span class="text-secondary">JSONB</span>,
+    created_at <span class="text-secondary">TIMESTAMP WITH TIME ZONE DEFAULT</span> <span class="text-secondary">NOW</span>()
+) <span class="text-secondary">PARTITION BY RANGE</span> (created_at);
+
+<span class="text-outline">-- Partition for current month</span>
+<span class="text-secondary">CREATE TABLE</span> events_log_2023_10 <span class="text-secondary">PARTITION OF</span> events_log
+    <span class="text-secondary">FOR VALUES FROM</span> (<span class="text-tertiary">'2023-10-01'</span>) <span class="text-secondary">TO</span> (<span class="text-tertiary">'2023-11-01'</span>);
+
+<span class="text-secondary">CREATE INDEX</span> idx_event_type <span class="text-secondary">ON</span> events_log(event_type);
+<span class="text-secondary">CREATE INDEX</span> idx_payload_gin <span class="text-secondary">ON</span> events_log <span class="text-secondary">USING</span> GIN (payload);
+                    </pre>
+</div>
+</div>
+<div class="mt-8 mb-24 p-4 border-l-2 border-tertiary bg-tertiary/5 rounded-r-xl">
+<h4 class="font-headline-sm text-[14px] text-tertiary mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="check_circle">check_circle</span>
+                    Validation Passed
+                </h4>
+<p class="text-body-md font-body-md text-on-surface-variant">Syntactic analysis complete. No vulnerabilities detected in partition logic or indexing strategy.</p>
+</div>
+</div>
+<footer class="p-6 bg-surface-container-high border-t border-outline-variant/30 flex gap-4">
+<button class="flex-grow py-3 bg-surface-variant rounded-xl text-on-surface font-bold">Edit</button>
+<button class="flex-grow py-3 bg-primary-container text-on-primary-container rounded-xl font-bold">Redeploy</button>
+</footer>
+</div>
+<script>
+        function toggleFilters() {
+            const drawer = document.getElementById('filter-drawer');
+            const panel = drawer.querySelector('div');
+            if (drawer.classList.contains('opacity-0')) {
+                drawer.classList.remove('opacity-0', 'pointer-events-none');
+                panel.classList.remove('translate-y-full');
+            } else {
+                drawer.classList.add('opacity-0', 'pointer-events-none');
+                panel.classList.add('translate-y-full');
+            }
+        }
+
+        function toggleDetail() {
+            const sheet = document.getElementById('detail-sheet');
+            if (sheet.classList.contains('translate-x-full')) {
+                sheet.classList.remove('translate-x-full');
+            } else {
+                sheet.classList.add('translate-x-full');
+            }
+        }
+
+        // Swipe interaction simulation
+        document.querySelectorAll('.swipe-action').forEach(item => {
+            let startX;
+            item.addEventListener('touchstart', e => {
+                startX = e.touches[0].clientX;
+            });
+            item.addEventListener('touchend', e => {
+                const endX = e.changedTouches[0].clientX;
+                if (startX - endX > 50) {
+                    item.classList.add('active-swipe');
+                } else if (endX - startX > 50) {
+                    item.classList.remove('active-swipe');
+                }
+            });
+        });
+    </script>
+</body></html>
