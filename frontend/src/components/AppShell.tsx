@@ -1,5 +1,7 @@
 'use client'
 
+import React, { useState, useEffect } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import { Sidebar } from './Sidebar'
 import { SplashScreen } from './SplashScreen'
 import { API_BASE_URL } from '../lib/api'
