@@ -50,7 +50,7 @@ export const ChatThread: React.FC = () => {
           </div>
         )}
 
-        {messages.map((msg) => (
+        {messages.map((msg, idx) => (
           <div key={msg.id} className="animate-fadeIn">
             {msg.sender === 'user' ? (
               /* User Chat Bubble */
@@ -102,16 +102,26 @@ export const ChatThread: React.FC = () => {
                   {msg.result && (
                     <div className="space-y-4">
                       {/* Collapsible Lineage */}
-                      <CollapsibleCard title="Resolved Data Lineage Map" icon={<GitBranch className="w-3.5 h-3.5" />} defaultExpanded={false}>
+                      <CollapsibleCard 
+                        title={`Resolved Lineage Map (${msg.result.target_name || 'Graph'})`} 
+                        icon={<GitBranch className="w-3.5 h-3.5" />} 
+                        defaultExpanded={idx === messages.length - 1}
+                      >
                         <div className="h-64 rounded-lg overflow-hidden border border-surfaceBorder bg-background/50">
                           <LineageGraph />
                         </div>
                       </CollapsibleCard>
 
                       {/* Code Output Editor */}
-                      <div className="h-[350px] border border-surfaceBorder rounded-xl overflow-hidden shadow-lg">
-                        <CodeSandbox />
-                      </div>
+                      <CollapsibleCard 
+                        title={`Synthesized dbt Model & Contract (${msg.result.target_name || 'Code'})`} 
+                        icon={<TerminalSquare className="w-3.5 h-3.5" />} 
+                        defaultExpanded={idx === messages.length - 1}
+                      >
+                        <div className="h-[350px] border border-surfaceBorder rounded-xl overflow-hidden shadow-lg">
+                          <CodeSandbox />
+                        </div>
+                      </CollapsibleCard>
                     </div>
                   )}
                 </div>

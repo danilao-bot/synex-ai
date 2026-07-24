@@ -108,8 +108,13 @@ export const PromptConsole: React.FC = () => {
     }
   }
 
+  const { messages } = useWorkspaceStore()
+  const totalChars = messages.reduce((acc, m) => acc + m.text.length + (m.result?.sql?.length || 0), 0)
+  const estimatedTokens = Math.round(totalChars / 4)
+  const formattedTokens = estimatedTokens > 1000 ? `${(estimatedTokens / 1000).toFixed(1)}k` : `${estimatedTokens}`
+
   return (
-    <div className="w-full max-w-4xl mx-auto group">
+    <div className="w-full max-w-4xl mx-auto group space-y-2">
       <form onSubmit={handleSend} className="bg-surface border border-surfaceBorder rounded-2xl p-2 flex items-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-300 focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary/50">
         <input
           type="text"
@@ -127,6 +132,15 @@ export const PromptConsole: React.FC = () => {
           <ArrowUp className="w-5 h-5 stroke-[2.5px]" />
         </button>
       </form>
+
+      {/* Token Context Capacity Gauge */}
+      <div className="flex items-center justify-between px-3 text-[11px] font-mono text-gray-500">
+        <div className="flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+          <span>LLM Context: <strong className="text-gray-300 font-semibold">{formattedTokens} / 128k</strong> tokens</span>
+        </div>
+        <span>DataHub GMS: Active</span>
+      </div>
     </div>
   )
 }
