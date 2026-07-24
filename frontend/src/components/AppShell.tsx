@@ -13,13 +13,23 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   const [isConfigured, setIsConfigured] = useState<boolean | null>(null)
 
   useEffect(() => {
+    // Check local storage completion flag first
+    const isCompleted = typeof window !== 'undefined' && localStorage.getItem('synex_onboarding_completed') === 'true'
+
+    if (isCompleted) {
+      setIsConfigured(true)
+      return
+    }
+
     // Check backend configuration on app load
     fetch(`${API_BASE_URL}/api/v1/settings`)
       .then(res => res.json())
       .then(data => {
         const configured = Boolean(data.datahub_gms_url || data.openai_api_key_masked)
         setIsConfigured(configured)
-        if (!configured && pathname !== '/onboarding') {
+        if (configured) {
+          localStorage.setItem('synex_onboarding_completed', 'true')
+        } else if (pathname !== '/onboarding') {
           router.replace('/onboarding')
         }
       })

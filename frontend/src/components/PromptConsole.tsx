@@ -6,61 +6,71 @@ import { useWorkspaceStore } from '../store/useWorkspaceStore'
 import { API_BASE_URL } from '../lib/api'
 
 export const PromptConsole: React.FC = () => {
-  const { prompt, setPrompt, addMessage, updateAgentMessage, setSelectedUrn } = useWorkspaceStore()
-  const [loading, setLoading] = useState(false)
+    const { prompt, setPrompt, addMessage, updateAgentMessage, setSelectedUrn, activeSessionId, setActiveSessionId } = useWorkspaceStore()
+    const [loading, setLoading] = useState(false)
 
-  const handleSend = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault()
-    if (!prompt.trim() || loading) return
+    const handleSend = async (e?: React.FormEvent) => {
+      if (e) e.preventDefault()
+      if (!prompt.trim() || loading) return
 
-    const userPrompt = prompt.trim()
-    setPrompt('')
-    setLoading(true)
+      const userPrompt = prompt.trim()
+      setPrompt('')
+      setLoading(true)
 
-    const now = () => new Date().toLocaleTimeString('en-US', { hour12: false })
-    const userMsgId = 'user-' + Date.now()
-    const agentMsgId = 'agent-' + Date.now()
+      let currentSession = activeSessionId
+      if (!currentSession) {
+        // Generate a random UUID-like session identifier
+        currentSession = 'session-' + Date.now()
+        setActiveSessionId(currentSession)
+      }
 
-    // 1. Add User Message
-    addMessage({
-      id: userMsgId,
-      sender: 'user',
-      text: userPrompt,
-      timestamp: now()
-    })
+      const now = () => new Date().toLocaleTimeString('en-US', { hour12: false })
+      const userMsgId = 'user-' + Date.now()
+      const agentMsgId = 'agent-' + Date.now()
 
-    // 2. Add Pending Agent Message with initial trace step
-    addMessage({
-      id: agentMsgId,
-      sender: 'agent',
-      text: 'Initializing Synex AI Engine...',
-      timestamp: now(),
-      status: 'RUNNING',
-      steps: [
-        { step: 1, type: 'INFO', message: `[${now()}] INFO: Connecting to Synex Backend Engine...` }
-      ]
-    })
-
-    // Helper to push trace logs
-    const pushStep = (stepNum: number, type: string, text: string) => {
-      useWorkspaceStore.setState((state) => ({
-        messages: state.messages.map(m => 
-          m.id === agentMsgId 
-            ? { ...m, steps: [...(m.steps || []), { step: stepNum, type, message: `[${now()}] ${type}: ${text}` }] } 
-            : m
-        )
-      }))
-    }
-
-    try {
-      // Make backend API request to FastAPI engine
-      const response = await fetch(`${API_BASE_URL}/api/v1/run`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt: userPrompt }),
+      // 1. Add User Message
+      addMessage({
+        id: userMsgId,
+        sender: 'user',
+        text: userPrompt,
+        timestamp: now()
       })
+
+      // 2. Add Pending Agent Message with initial trace step
+      addMessage({
+        id: agentMsgId,
+        sender: 'agent',
+        text: 'Initializing Synex AI Engine...',
+        timestamp: now(),
+        status: 'RUNNING',
+        steps: [
+          { step: 1, type: 'INFO', message: `[${now()}] INFO: Connecting to Synex Backend Engine...` }
+        ]
+      })
+
+      // Helper to push trace logs
+      const pushStep = (stepNum: number, type: string, text: string) => {
+        useWorkspaceStore.setState((state) => ({
+          messages: state.messages.map(m => 
+            m.id === agentMsgId 
+              ? { ...m, steps: [...(m.steps || []), { step: stepNum, type, message: `[${now()}] ${type}: ${text}` }] } 
+              : m
+          )
+        }))
+      }
+
+      try {
+        // Make backend API request to FastAPI engine
+        const response = await fetch(`${API_BASE_URL}/api/v1/run`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            prompt: userPrompt,
+            session_id: currentSession
+          }),
+        })
 
       if (!response.ok) {
         const errDetail = await response.text()

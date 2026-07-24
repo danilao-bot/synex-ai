@@ -28,11 +28,13 @@ interface WorkspaceState {
   isExecuting: boolean;
   selectedUrn: string | null;
   selectedPiiColumns: string[];
+  activeSessionId: string | null;
   
   setPrompt: (prompt: string) => void;
   addMessage: (message: ChatMessage) => void;
   updateAgentMessage: (id: string, updates: Partial<ChatMessage>) => void;
   setSelectedUrn: (urn: string | null, piiColumns?: string[]) => void;
+  setActiveSessionId: (id: string | null) => void;
   clearHistory: () => void;
 }
 
@@ -49,6 +51,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   isExecuting: false,
   selectedUrn: null,
   selectedPiiColumns: [],
+  activeSessionId: null,
 
   setPrompt: (prompt) => set({ prompt }),
   addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
@@ -56,6 +59,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
     messages: state.messages.map(msg => msg.id === id ? { ...msg, ...updates } : msg)
   })),
   setSelectedUrn: (urn, piiColumns = []) => set({ selectedUrn: urn, selectedPiiColumns: piiColumns }),
+  setActiveSessionId: (id) => set({ activeSessionId: id }),
   clearHistory: () => set({
     messages: [
       {
@@ -66,6 +70,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
       }
     ],
     selectedUrn: null,
-    selectedPiiColumns: []
+    selectedPiiColumns: [],
+    activeSessionId: null
   })
 }))

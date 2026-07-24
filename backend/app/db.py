@@ -85,6 +85,26 @@ async def get_run_history(limit: int = 20) -> list[dict[str, Any]]:
         return []
 
 
+async def get_last_run_for_session(session_id: str) -> dict[str, Any] | None:
+    """Fetch the most recent run for a specific session."""
+    client = get_supabase_client()
+    if client is None or not session_id:
+        return None
+    try:
+        response = await asyncio.to_thread(
+            lambda: client.table("synex_runs")
+            .select("*")
+            .eq("session_id", session_id)
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        return response.data[0] if response.data else None
+    except Exception:
+        logger.exception("Could not read last run for session %s", session_id)
+        return None
+
+
 async def save_agent_settings(payload: dict[str, Any]) -> bool:
     """Save or update configuration row in synex_settings."""
     client = get_supabase_client()

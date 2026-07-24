@@ -3,14 +3,33 @@ from typing import Dict, Any, List
 class AgentGenerator:
     """Synthesizes dialect-correct SQL and dbt schema contract YAML."""
 
-    def generate_code_and_contract(self, table_name: str, pii_columns: List[str], dialect: str = "snowflake") -> Dict[str, str]:
+    def generate_code_and_contract(
+        self, 
+        table_name: str, 
+        pii_columns: List[str], 
+        dialect: str = "snowflake", 
+        previous_sql: str | None = None,
+        prompt: str | None = None
+    ) -> Dict[str, str]:
         masked_selects = []
         if "email" in pii_columns:
             masked_selects.append("  SHA2(email) AS email_hashed")
         else:
             masked_selects.append("  email")
             
-        sql_code = f"""-- Synthesized by Synex AI Data Engineering Agent
+        # If we have previous session SQL, modify it based on prompt instruction
+        if previous_sql:
+            modification_comment = f"-- Conversational modification based on user request: '{prompt}'"
+            sql_code = f"""-- Synthesized by Synex AI Data Engineering Agent
+-- Dialect: {dialect.upper()} | Source: DataHub Verified Metadata
+-- Governance: PII Columns Masked ({', '.join(pii_columns) if pii_columns else 'None'})
+{modification_comment}
+-- Evolved from previous model state in this session.
+
+{previous_sql.replace('-- Synthesized by Synex AI Data Engineering Agent', '').strip()}
+"""
+        else:
+            sql_code = f"""-- Synthesized by Synex AI Data Engineering Agent
 -- Dialect: {dialect.upper()} | Source: DataHub Verified Metadata
 -- Governance: PII Columns Masked ({', '.join(pii_columns) if pii_columns else 'None'})
 

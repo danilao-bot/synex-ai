@@ -14,7 +14,7 @@ from app.agent.generator import generator
 from app.agent.planner import planner
 from app.agent.reasoner import reasoner
 from app.agent.validator import validator
-from app.db import create_run, get_latest_agent_settings, get_run_history, save_agent_settings, update_run
+from app.db import create_run, get_latest_agent_settings, get_run_history, save_agent_settings, update_run, get_last_run_for_session
 from app.services.datahub_client import datahub_client
 from app.services.mcp_emitter import mcp_emitter
 
@@ -63,6 +63,7 @@ class AgentRunRequest(BaseModel):
     prompt: str = Field(min_length=1, max_length=8_000)
     target_dialect: str = "snowflake"
     writeback_enabled: bool = True
+    session_id: str | None = None
 
 
 async def execute_agent(
@@ -70,7 +71,12 @@ async def execute_agent(
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Run the metadata-first workflow once and return its final response plus trace."""
     trace: list[dict[str, Any]] = []
-    run_id = await create_run({"prompt": request.prompt, "status": "running", "trace_logs": []})
+    run_id = await create_run({
+        "prompt": request.prompt, 
+        "status": "running", 
+        "trace_logs": [],
+        "session_id": request.session_id
+    })
 
     def add_trace(kind: str, message: str) -> None:
         event = {"step": len(trace) + 1, "type": kind, "message": message}
@@ -85,6 +91,14 @@ async def execute_agent(
             datahub_client.configure(db_settings["datahub_gms_url"])
             mcp_emitter.configure(db_settings["datahub_gms_url"])
 
+        # Pull previous session memory if available
+        previous_sql = None
+        if request.session_id:
+            previous_run = await get_last_run_for_session(request.session_id)
+            if previous_run and previous_run.get("generated_sql"):
+                previous_sql = previous_run.get("generated_sql")
+                add_trace("MEMORY_LOAD", "Successfully loaded conversational memory from previous execution turn.")
+
         add_trace("ENTITY_DISCOVERY", "Searching the DataHub metadata graph for matching datasets.")
         entities = reasoner.rank_candidates(await datahub_client.search_entities(request.prompt))
         if not entities:
@@ -98,10 +112,13 @@ async def execute_agent(
             add_trace("WARNING", "Selected dataset is deprecated; generated output should be reviewed before use.")
 
         add_trace("LINEAGE_TRAVERSAL", f"Detected PII columns: {', '.join(governance['pii_columns']) or 'none'}.")
+        
         generated = generator.generate_code_and_contract(
             table_name=aspects.get("name") or target_urn,
             pii_columns=governance["pii_columns"],
             dialect=request.target_dialect,
+            previous_sql=previous_sql,
+            prompt=request.prompt
         )
 
         validation = validator.validate_sql(generated["sql"], request.target_dialect)
@@ -132,6 +149,7 @@ async def execute_agent(
         await update_run(run_id, {
             "status": "completed", "target_urn": result["target_urn"], "target_name": result["target_name"],
             "pii_columns": result["pii_columns"], "sql": result["sql"], "dbt_yaml": result["dbt_yaml"], "trace_logs": trace,
+            "session_id": request.session_id
         })
         return result, trace
     except Exception as exc:
