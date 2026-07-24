@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Server, Key, BrainCircuit, Save, CheckCircle2, Loader2, AlertCircle } from 'lucide-react'
+import { API_BASE_URL } from '../../lib/api'
 
 export default function SettingsPage() {
   const [gmsUrl, setGmsUrl] = useState('http://localhost:8080')
@@ -18,7 +19,7 @@ export default function SettingsPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('http://localhost:8000/api/v1/settings')
+      const res = await fetch(`${API_BASE_URL}/api/v1/settings`)
       if (res.ok) {
         const data = await res.json()
         if (data.datahub_gms_url) setGmsUrl(data.datahub_gms_url)
@@ -43,7 +44,7 @@ export default function SettingsPage() {
     setSaveStatus(null)
     setError(null)
     try {
-      const res = await fetch('http://localhost:8000/api/v1/settings', {
+      const res = await fetch(`${API_BASE_URL}/api/v1/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -173,11 +174,12 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="flex justify-end">
+          {/* Save Action */}
+          <div className="pt-2 flex justify-start">
             <button 
               onClick={handleSave}
               disabled={isSaving || loading}
-              className="bg-primary hover:bg-primaryHover text-white font-bold text-sm tracking-widest uppercase px-8 py-3 rounded-xl shadow-lg transition flex items-center gap-2 disabled:opacity-50 font-sans cursor-pointer"
+              className="bg-primary hover:bg-primaryHover text-white font-bold text-xs tracking-wider uppercase px-8 py-3.5 rounded-xl shadow-lg transition flex items-center gap-2 disabled:opacity-50 font-sans cursor-pointer"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               {isSaving ? 'Saving Configuration...' : 'Save Configuration'}
@@ -188,37 +190,37 @@ export default function SettingsPage() {
 
         {/* Right Column: Diagnostics */}
         <div className="col-span-4 space-y-6">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 font-mono">System Diagnostics</h2>
+          <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 font-mono">SYSTEM DIAGNOSTICS</h2>
           
-          <div className="bg-[#0A0E17] border border-surfaceBorder rounded-xl p-5">
-            <div className="flex justify-between items-start mb-4">
+          <div className="bg-[#0A0E17] border border-surfaceBorder rounded-xl p-5 space-y-4">
+            <div className="flex justify-between items-center border-b border-surfaceBorder/50 pb-3">
               <div className="flex items-center gap-2">
                 <Server className="w-4 h-4 text-accent" />
                 <span className="font-bold text-sm text-white font-sans">FastAPI Engine</span>
               </div>
-              <div className={`flex items-center gap-1 px-2.5 py-0.5 rounded text-[10px] font-bold font-mono ${error ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
-                <CheckCircle2 className="w-3 h-3" /> {error ? 'OFFLINE' : 'ONLINE'}
-              </div>
+              <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold font-mono ${error ? 'bg-danger/10 text-danger' : 'bg-success/10 text-success'}`}>
+                {error ? 'OFFLINE' : 'ONLINE'}
+              </span>
             </div>
-            <div className="space-y-2 text-xs font-mono text-gray-400">
-              <div className="flex justify-between"><span className="text-gray-500">Host:</span> <span className="text-white">localhost:8000</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Status:</span> <span className="text-white">{error ? 'Disconnected' : '200 OK'}</span></div>
+            <div className="space-y-2 text-xs font-sans">
+              <div className="flex items-center gap-2"><span className="text-gray-500 font-sans">Host:</span> <span className="text-gray-200 font-mono">localhost:8000</span></div>
+              <div className="flex items-center gap-2"><span className="text-gray-500 font-sans">Status:</span> <span className="text-gray-200 font-mono">{error ? 'Disconnected' : '200 OK'}</span></div>
             </div>
           </div>
 
-          <div className="bg-[#0A0E17] border border-surfaceBorder rounded-xl p-5">
-            <div className="flex justify-between items-start mb-4">
+          <div className="bg-[#0A0E17] border border-surfaceBorder rounded-xl p-5 space-y-4">
+            <div className="flex justify-between items-center border-b border-surfaceBorder/50 pb-3">
               <div className="flex items-center gap-2">
                 <BrainCircuit className="w-4 h-4 text-primary" />
                 <span className="font-bold text-sm text-white font-sans">Metadata Vault</span>
               </div>
-              <div className="flex items-center gap-1 bg-success/10 text-success px-2.5 py-0.5 rounded text-[10px] font-bold font-mono">
-                <CheckCircle2 className="w-3 h-3" /> OPERATIONAL
-              </div>
+              <span className="bg-success/10 text-success px-2.5 py-0.5 rounded text-[10px] font-bold font-mono">
+                OPERATIONAL
+              </span>
             </div>
-            <div className="space-y-2 text-xs font-mono text-gray-400">
-              <div className="flex justify-between"><span className="text-gray-500">Security:</span> <span className="text-white">AES-256 Encrypted</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Sync:</span> <span className="text-white">Real-Time Audit Log</span></div>
+            <div className="space-y-2 text-xs font-sans">
+              <div className="flex items-center gap-2"><span className="text-gray-500 font-sans">Security:</span> <span className="text-gray-200 font-sans">AES-256 Encrypted</span></div>
+              <div className="flex items-center gap-2"><span className="text-gray-500 font-sans">Sync:</span> <span className="text-gray-200 font-sans">Real-Time Audit Log</span></div>
             </div>
           </div>
 

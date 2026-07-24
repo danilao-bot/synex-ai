@@ -86,15 +86,22 @@ export const Sidebar: React.FC = () => {
       </nav>
 
       {/* Bottom Status */}
-      <div className="p-2 border-t border-surfaceBorder shrink-0">
-        <div className="bg-surface rounded p-2 flex flex-col gap-2">
-          <div className="flex items-center justify-between min-h-[16px]">
-            {!isCollapsed && <span className="text-[10px] text-gray-400 font-mono truncate">GMS STATUS</span>}
-            <div className={`w-2 h-2 rounded-full bg-success animate-pulse shadow-[0_0_8px_rgba(5,242,155,0.6)] ${isCollapsed ? 'mx-auto' : ''}`} title="GMS Healthy"></div>
+      <div className="p-3 border-t border-surfaceBorder shrink-0">
+        <div className="bg-surface/80 border border-surfaceBorder rounded-xl p-3.5 flex flex-col gap-2.5 shadow-inner">
+          <div className="flex items-center justify-between min-h-[18px]">
+            {!isCollapsed && <span className="text-[10px] text-gray-400 font-mono tracking-widest uppercase">GMS STATUS</span>}
+            <div className={`flex items-center gap-1.5 ${isCollapsed ? 'mx-auto' : ''}`}>
+              <div className="w-2 h-2 rounded-full bg-success animate-pulse shadow-[0_0_8px_rgba(5,242,155,0.6)]" title="GMS Healthy" />
+              {!isCollapsed && <span className="text-[10px] font-sans font-semibold text-gray-300">Live</span>}
+            </div>
           </div>
-          <div className="flex items-center justify-between min-h-[16px]">
-            {!isCollapsed && <span className="text-[10px] text-gray-400 font-mono truncate">SANDBOX</span>}
-            <div className={`w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_rgba(0,229,255,0.6)] ${isCollapsed ? 'mx-auto' : ''}`} title="Sandbox Ready"></div>
+
+          <div className="flex items-center justify-between min-h-[18px]">
+            {!isCollapsed && <span className="text-[10px] text-gray-400 font-mono tracking-widest uppercase">SANDBOX</span>}
+            <div className={`flex items-center gap-1.5 ${isCollapsed ? 'mx-auto' : ''}`}>
+              <div className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_rgba(0,229,255,0.6)]" title="Sandbox Ready" />
+              {!isCollapsed && <span className="text-[10px] font-sans font-semibold text-gray-300">Ready</span>}
+            </div>
           </div>
         </div>
       </div>

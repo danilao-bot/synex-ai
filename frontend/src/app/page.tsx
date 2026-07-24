@@ -12,41 +12,44 @@ export default function WorkspacePage() {
   const { clearHistory } = useWorkspaceStore()
 
   return (
-    <div className="flex flex-col h-full bg-background p-6 overflow-hidden">
+    <div className="flex flex-col h-full bg-background p-6 overflow-hidden relative">
+      {/* Header */}
+
       {/* Header */}
       <header className="flex items-center justify-between mb-6 shrink-0">
         <div>
           <h1 className="text-2xl font-display font-semibold text-white tracking-tight">Workspace Studio</h1>
           <p className="text-sm text-gray-400 mt-1 font-sans">Converse with Synex Agent to build metadata-first models.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {/* Primary Anchor: System Health */}
-          <button className="bg-success text-black font-bold text-xs px-3 py-1.5 rounded flex items-center gap-2 shadow-[0_0_12px_rgba(5,242,155,0.25)] mr-4">
-            <Sparkles className="w-3.5 h-3.5" /> SYSTEM HEALTHY
-          </button>
+          <div className="bg-success/15 border border-success/30 text-success font-sans font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-2 shadow-[0_0_12px_rgba(5,242,155,0.2)]">
+            <Sparkles className="w-3.5 h-3.5 text-success" />
+            <span>SYSTEM HEALTHY</span>
+          </div>
           
           {/* Recessed Info: Latency */}
-          <div className="flex items-center gap-2 px-2 py-1.5 text-xs text-gray-500 font-mono">
-            <Activity className="w-3.5 h-3.5" />
-            14ms
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-surfaceBorder bg-surface/50 text-xs text-gray-400 font-mono">
+            <Activity className="w-3.5 h-3.5 text-accent" />
+            <span>14ms</span>
           </div>
 
-          <div className="w-px h-4 bg-surfaceBorder mx-2"></div>
+          <div className="w-px h-4 bg-surfaceBorder mx-1"></div>
 
           {/* Recessed Action: Reset */}
           <button 
             onClick={clearHistory}
-            className="flex items-center gap-1.5 px-2 py-1.5 rounded text-xs text-gray-500 hover:text-gray-300 hover:bg-surface transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-surfaceBorder bg-surface hover:bg-surfaceBorder text-xs text-gray-400 hover:text-white transition font-sans cursor-pointer"
             title="Reset Workspace"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            Reset
+            <span>Reset</span>
           </button>
           
           {/* Recessed Action: Right Sidebar Toggle */}
           <button 
             onClick={() => setIsRightCollapsed(!isRightCollapsed)}
-            className="p-1.5 rounded hover:bg-surface text-gray-500 hover:text-gray-300 transition ml-2"
+            className="p-2 rounded-lg border border-surfaceBorder bg-surface hover:bg-surfaceBorder text-gray-400 hover:text-white transition cursor-pointer"
             title={isRightCollapsed ? "Show Aspect Inspector" : "Hide Aspect Inspector"}
           >
             {isRightCollapsed ? <PanelRightOpen className="w-4 h-4" /> : <PanelRightClose className="w-4 h-4" />}

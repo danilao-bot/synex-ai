@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Filter, RefreshCw, Copy, CheckCircle2, Loader2, Database, AlertCircle, Download, Check } from 'lucide-react'
+import { API_BASE_URL } from '../../lib/api'
 
 export default function HistoryPage() {
   const [runs, setRuns] = useState<any[]>([])
@@ -16,7 +17,7 @@ export default function HistoryPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('http://localhost:8000/api/v1/history')
+      const res = await fetch(`${API_BASE_URL}/api/v1/history`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
       const fetchedRuns = data.runs || []
@@ -72,53 +73,57 @@ export default function HistoryPage() {
       {/* Header */}
       <header className="mb-6 shrink-0 flex justify-between items-center">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-wide font-display">Execution Run History</h1>
-          <p className="text-sm text-gray-400 font-sans">Audit past data modeling tasks, synthesized contracts, and trace logs.</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight font-display">Execution Run History</h1>
+          <p className="text-sm text-gray-400 mt-1 font-sans">Audit past data modeling tasks, synthesized contracts, and trace logs.</p>
         </div>
         <button 
           onClick={exportCSV}
           disabled={runs.length === 0}
-          className="bg-primary hover:bg-primaryHover text-white font-bold text-xs px-4 py-2 rounded-xl transition flex items-center gap-2 shadow-lg disabled:opacity-40 font-sans cursor-pointer"
+          className="border border-surfaceBorder bg-surface hover:bg-surfaceBorder text-gray-200 hover:text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-sm disabled:opacity-40 font-sans cursor-pointer"
         >
-          <Download className="w-4 h-4" /> Export CSV
+          <Download className="w-4 h-4 text-primary" /> Export CSV
         </button>
       </header>
 
       {/* Top Metrics Cards */}
       <div className="grid grid-cols-3 gap-6 mb-6 shrink-0">
-        <div className="bg-surface border border-surfaceBorder rounded-xl p-5 shadow-lg relative overflow-hidden">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xs font-mono text-gray-400 uppercase tracking-widest">Success Rate</h3>
-            <CheckCircle2 className="w-5 h-5 text-success" />
+        <div className="bg-surface border border-surfaceBorder rounded-xl p-5 shadow-lg relative flex flex-col justify-between">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">SUCCESS RATE</h3>
+            <CheckCircle2 className="w-4 h-4 text-success" />
           </div>
-          <div className="flex items-end gap-4">
-            <div className="w-16 h-16 rounded-full border-[4px] border-success border-r-surfaceBorder flex items-center justify-center">
-              <span className="text-xs font-bold text-gray-300 font-mono">{successRate}%</span>
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full border-[3px] border-success border-r-surfaceBorder flex items-center justify-center shrink-0">
+              <span className="text-xs font-bold text-gray-200 font-sans">{successRate}%</span>
             </div>
             <div>
-              <div className="text-3xl font-bold text-white font-display">{successRate}%</div>
-              <div className="text-xs text-gray-500 font-mono">Real-Time Telemetry</div>
+              <div className="text-2xl font-bold text-white font-sans tracking-tight">{successRate}%</div>
+              <div className="text-xs text-gray-500 font-sans mt-0.5">Real-Time Telemetry</div>
             </div>
           </div>
         </div>
 
-        <div className="bg-surface border border-surfaceBorder rounded-xl p-5 shadow-lg relative">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xs font-mono text-gray-400 uppercase tracking-widest">Recorded Runs</h3>
-            <Database className="w-5 h-5 text-accent" />
+        <div className="bg-surface border border-surfaceBorder rounded-xl p-5 shadow-lg flex flex-col justify-between">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">RECORDED RUNS</h3>
+            <Database className="w-4 h-4 text-accent" />
           </div>
-          <div className="text-3xl font-bold text-accent mb-2 font-display">{runs.length}</div>
-          <div className="text-xs text-gray-500 font-mono">Total executions recorded</div>
+          <div>
+            <div className="text-2xl font-bold text-accent font-sans tracking-tight">{runs.length}</div>
+            <div className="text-xs text-gray-500 font-sans mt-0.5">Total executions recorded</div>
+          </div>
         </div>
 
-        <div className="bg-surface border border-surfaceBorder rounded-xl p-5 shadow-lg">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xs font-mono text-gray-400 uppercase tracking-widest">Backend Connection</h3>
-            <span className={`w-3 h-3 rounded-full ${error ? 'bg-danger' : 'bg-success animate-pulse'}`} />
+        <div className="bg-surface border border-surfaceBorder rounded-xl p-5 shadow-lg flex flex-col justify-between">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">BACKEND CONNECTION</h3>
+            <span className={`w-2.5 h-2.5 rounded-full ${error ? 'bg-danger' : 'bg-success animate-pulse'}`} />
           </div>
-          <div className="text-lg font-bold text-white mb-1 font-sans">{error ? 'DISCONNECTED' : 'VAULT SYNC LIVE'}</div>
-          <div className="text-xs text-gray-500 font-mono">
-            {error ? 'Check server connection' : 'Audit telemetry stream active'}
+          <div>
+            <div className="text-lg font-bold text-white font-sans">{error ? 'DISCONNECTED' : 'VAULT SYNC LIVE'}</div>
+            <div className="text-xs text-gray-500 font-sans mt-0.5">
+              {error ? 'Check server connection' : 'Audit telemetry stream active'}
+            </div>
           </div>
         </div>
       </div>

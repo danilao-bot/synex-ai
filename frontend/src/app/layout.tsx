@@ -23,6 +23,8 @@ export const metadata: Metadata = {
   description: 'Metadata-driven autonomous AI Data Engineering Agent powered by DataHub.',
 }
 
+import { AppShell } from '../components/AppShell'
+
 export default function RootLayout({
   children,
 }: {
@@ -30,11 +32,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`bg-background text-gray-100 antialiased h-screen w-screen flex overflow-hidden ${fontInter.variable} ${fontOutfit.variable} ${fontMono.variable} font-sans`}>
-        <Sidebar />
-        <main className="flex-1 flex flex-col overflow-hidden h-full min-w-0 relative z-10">
+      <body className={`bg-background text-gray-100 antialiased h-screen w-screen overflow-hidden ${fontInter.variable} ${fontOutfit.variable} ${fontMono.variable} font-sans`}>
+        <AppShell>
           {children}
-        </main>
+        </AppShell>
       </body>
     </html>
   )

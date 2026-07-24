@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Send, ArrowUp } from 'lucide-react'
 import { useWorkspaceStore } from '../store/useWorkspaceStore'
+import { API_BASE_URL } from '../lib/api'
 
 export const PromptConsole: React.FC = () => {
   const { prompt, setPrompt, addMessage, updateAgentMessage, setSelectedUrn } = useWorkspaceStore()
@@ -53,7 +54,7 @@ export const PromptConsole: React.FC = () => {
 
     try {
       // Make backend API request to FastAPI engine
-      const response = await fetch('http://localhost:8000/api/v1/run', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/run`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
