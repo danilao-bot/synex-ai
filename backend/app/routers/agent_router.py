@@ -15,6 +15,12 @@ from app.agent.planner import planner
 from app.agent.reasoner import reasoner
 from app.agent.validator import validator
 from app.db import create_run, get_latest_agent_settings, get_run_history, save_agent_settings, update_run
+from app.services.datahub_client import datahub_client
+from app.services.mcp_emitter import mcp_emitter
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/api/v1", tags=["Agent"])
+
 
 class SettingsPayload(BaseModel):
     datahub_gms_url: str | None = None
@@ -49,11 +55,6 @@ async def update_settings(payload: SettingsPayload) -> dict[str, Any]:
         raise HTTPException(status_code=500, detail="Failed to save settings to database")
     return {"status": "success", "updated_keys": list(data.keys())}
 
-from app.services.datahub_client import datahub_client
-from app.services.mcp_emitter import mcp_emitter
-
-logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/api/v1", tags=["Agent"])
 
 
 class AgentRunRequest(BaseModel):
