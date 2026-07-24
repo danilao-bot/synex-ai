@@ -14,7 +14,41 @@ from app.agent.generator import generator
 from app.agent.planner import planner
 from app.agent.reasoner import reasoner
 from app.agent.validator import validator
-from app.db import create_run, get_latest_agent_settings, update_run
+from app.db import create_run, get_latest_agent_settings, get_run_history, save_agent_settings, update_run
+
+class SettingsPayload(BaseModel):
+    datahub_gms_url: str | None = None
+    snowflake_account: str | None = None
+    openai_api_key: str | None = None
+
+
+@router.get("/history")
+async def fetch_history() -> dict[str, Any]:
+    """Return past execution runs from Supabase synex_runs table."""
+    history = await get_run_history()
+    return {"runs": history, "count": len(history)}
+
+
+@router.get("/settings")
+async def fetch_settings() -> dict[str, Any]:
+    """Return active non-secret configuration parameters."""
+    settings_data = await get_latest_agent_settings()
+    # Mask API key if present
+    if settings_data.get("openai_api_key"):
+        settings_data["openai_api_key_masked"] = "sk-..." + settings_data["openai_api_key"][-4:]
+        del settings_data["openai_api_key"]
+    return settings_data
+
+
+@router.post("/settings")
+async def update_settings(payload: SettingsPayload) -> dict[str, Any]:
+    """Save new configuration parameters to Supabase synex_settings table."""
+    data = payload.model_dump(exclude_none=True)
+    success = await save_agent_settings(data)
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to save settings to database")
+    return {"status": "success", "updated_keys": list(data.keys())}
+
 from app.services.datahub_client import datahub_client
 from app.services.mcp_emitter import mcp_emitter
 

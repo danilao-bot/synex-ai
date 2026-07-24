@@ -64,3 +64,36 @@ async def update_run(run_id: str | None, payload: dict[str, Any]) -> None:
         await asyncio.to_thread(lambda: client.table("synex_runs").update(payload).eq("id", run_id).execute())
     except Exception:
         logger.exception("Could not update synex_runs record %s", run_id)
+
+
+async def get_run_history(limit: int = 20) -> list[dict[str, Any]]:
+    """Fetch recent execution history from synex_runs."""
+    client = get_supabase_client()
+    if client is None:
+        return []
+    try:
+        response = await asyncio.to_thread(
+            lambda: client.table("synex_runs")
+            .select("*")
+            .order("created_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        return response.data if response.data else []
+    except Exception:
+        logger.exception("Could not read synex_runs history")
+        return []
+
+
+async def save_agent_settings(payload: dict[str, Any]) -> bool:
+    """Save or update configuration row in synex_settings."""
+    client = get_supabase_client()
+    if client is None:
+        return False
+    try:
+        await asyncio.to_thread(lambda: client.table("synex_settings").insert(payload).execute())
+        return True
+    except Exception:
+        logger.exception("Could not save synex_settings")
+        return False
+
