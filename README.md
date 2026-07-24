@@ -9,11 +9,12 @@ Synex is a metadata-driven autonomous AI Data Engineering Agent powered by DataH
 
 ## 🌟 Key Features
 
+- **Conversational AI Memory:** Uses session-based state persistence (`session_id`) to carry previous SQL code models across multiple prompt turns, allowing incremental modifications and iterations within the same workspace studio thread.
 - **Metadata-Driven Synthesis:** Queries DataHub GMS (`/aspects`) to discover table schemas, column data types, ownership tags, and upstream dependencies before generating code.
 - **Interactive Workspace Studio:** Real-time Chat Notebook UI featuring live trace logs, Monaco code editor with `Commit Model` capabilities, and reactive ReactFlow lineage graphs.
 - **PII Compliance Guardrails:** Automatically detects Tier-1 PII columns (e.g. `ssn`, `email`, `credit_card`) from DataHub tags and injects hashing/masking logic into synthesized SQL models.
 - **3-Step Onboarding Wizard:** Full-screen initial setup flow guiding users through DataHub GMS configuration, Snowflake warehouse connection, and AI provider key verification.
-- **Persistent Telemetry & Run History:** Stores execution history, synthesized SQL, and execution metrics in Supabase (`synex_runs`, `synex_settings`), featuring real-time search, status filtering, and one-click CSV exporting.
+- **Persistent Telemetry & Run History:** Stores execution history, session ids, synthesized SQL, and execution metrics in Supabase (`synex_runs`, `synex_settings`), featuring real-time search, status filtering, and one-click CSV exporting.
 - **60fps Canvas Radial Loader:** 1.8s HTML5 canvas loader rendering 8 radiating graph rays that simulate real-time lineage node expansion.
 
 ---
@@ -74,7 +75,13 @@ flowchart TD
 - Python 3.10+ and `pip`
 - Active Supabase project (or local PostgreSQL)
 
-### 2. Backend Setup
+### 2. Database Preparation
+To initialize session-based memory support, add the `session_id` column to the `synex_runs` table:
+```sql
+ALTER TABLE public.synex_runs ADD COLUMN session_id uuid;
+```
+
+### 3. Backend Setup
 ```bash
 # Navigate to backend directory
 cd backend
@@ -90,7 +97,7 @@ pip install -r requirements.txt
 python -m uvicorn app.main:app --port 8000 --reload
 ```
 
-### 3. Frontend Setup
+### 4. Frontend Setup
 ```bash
 # Navigate to frontend directory
 cd frontend
