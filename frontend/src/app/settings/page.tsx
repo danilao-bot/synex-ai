@@ -22,11 +22,10 @@ export default function SettingsPage() {
       const res = await fetch(`${API_BASE_URL}/api/v1/settings`)
       if (res.ok) {
         const data = await res.json()
-        if (data.datahub_gms_url) setGmsUrl(data.datahub_gms_url)
-        if (data.snowflake_account) setSnowflakeAccount(data.snowflake_account)
+        if (data.datahub_url) setGmsUrl(data.datahub_url)
         if (data.llm_provider) setProvider(data.llm_provider)
         if (data.llm_model) setModel(data.llm_model)
-        if (data.openai_api_key_masked) setApiKey(data.openai_api_key_masked)
+        if (data.llm_api_key_masked) setApiKey(data.llm_api_key_masked)
       }
     } catch (err: any) {
       setError(`Unable to connect to backend engine: ${err.message}`)
@@ -48,11 +47,10 @@ export default function SettingsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          datahub_gms_url: gmsUrl,
-          snowflake_account: snowflakeAccount,
+          datahub_url: gmsUrl,
           llm_provider: provider,
           llm_model: model,
-          openai_api_key: apiKey.startsWith('sk-...') ? undefined : apiKey
+          llm_api_key: apiKey.includes('...') ? undefined : apiKey
         })
       })
 
@@ -138,9 +136,9 @@ export default function SettingsPage() {
                     onChange={(e) => setProvider(e.target.value)}
                     className="w-full bg-[#0A0E17] border border-surfaceBorder rounded-md px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary transition cursor-pointer font-sans"
                   >
-                    <option value="OpenAI">OpenAI</option>
-                    <option value="Anthropic">Anthropic (Claude)</option>
-                    <option value="Local">Local (Ollama)</option>
+                    <option value="openrouter">OpenRouter (Recommended)</option>
+                    <option value="openai">OpenAI (Direct)</option>
+                    <option value="anthropic">Anthropic (Claude)</option>
                   </select>
                 </div>
                 <div>
@@ -150,10 +148,10 @@ export default function SettingsPage() {
                     onChange={(e) => setModel(e.target.value)}
                     className="w-full bg-[#0A0E17] border border-surfaceBorder rounded-md px-4 py-2.5 text-sm text-white focus:outline-none focus:border-primary transition cursor-pointer font-sans"
                   >
-                    <option value="gpt-4o">gpt-4o</option>
-                    <option value="gpt-4-turbo">gpt-4-turbo</option>
-                    <option value="claude-3-5-sonnet">claude-3-5-sonnet</option>
-                    <option value="llama3">llama3 (local)</option>
+                    <option value="openai/gpt-4o">openai/gpt-4o</option>
+                    <option value="openai/gpt-4-turbo">openai/gpt-4-turbo</option>
+                    <option value="anthropic/claude-3-5-sonnet">anthropic/claude-3-5-sonnet</option>
+                    <option value="meta-llama/llama-3.1-70b-instruct">meta-llama/llama-3.1-70b</option>
                   </select>
                 </div>
               </div>
@@ -169,7 +167,7 @@ export default function SettingsPage() {
                   />
                   <Key className="w-4 h-4 text-gray-500 absolute right-4 top-3" />
                 </div>
-                <p className="text-[11px] text-gray-500 mt-2 font-sans">API keys are encrypted at rest using enterprise hardware-backed security.</p>
+                <p className="text-[11px] text-gray-500 mt-2 font-sans">API keys are stored as server-side environment variables and never exposed to the browser.</p>
               </div>
             </div>
           </div>
@@ -219,7 +217,7 @@ export default function SettingsPage() {
               </span>
             </div>
             <div className="space-y-2 text-xs font-sans">
-              <div className="flex items-center gap-2"><span className="text-gray-500 font-sans">Security:</span> <span className="text-gray-200 font-sans">AES-256 Encrypted</span></div>
+              <div className="flex items-center gap-2"><span className="text-gray-500 font-sans">Storage:</span> <span className="text-gray-200 font-sans">Server-Side Env Vars</span></div>
               <div className="flex items-center gap-2"><span className="text-gray-500 font-sans">Sync:</span> <span className="text-gray-200 font-sans">Real-Time Audit Log</span></div>
             </div>
           </div>

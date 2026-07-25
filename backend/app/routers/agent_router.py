@@ -23,11 +23,11 @@ router = APIRouter(prefix="/api/v1", tags=["Agent"])
 
 
 class SettingsPayload(BaseModel):
-    datahub_gms_url: str | None = None
-    snowflake_account: str | None = None
-    openai_api_key: str | None = None
+    datahub_url: str | None = None
+    datahub_pat: str | None = None
     llm_provider: str | None = None
     llm_model: str | None = None
+    llm_api_key: str | None = None
 
 
 @router.get("/history")
@@ -41,10 +41,11 @@ async def fetch_history() -> dict[str, Any]:
 async def fetch_settings() -> dict[str, Any]:
     """Return active non-secret configuration parameters."""
     settings_data = await get_latest_agent_settings()
-    # Mask API key if present
-    if settings_data.get("openai_api_key"):
-        settings_data["openai_api_key_masked"] = "sk-..." + settings_data["openai_api_key"][-4:]
-        del settings_data["openai_api_key"]
+    # Mask LLM API key before returning — never expose raw key to frontend
+    if settings_data.get("llm_api_key"):
+        raw = settings_data["llm_api_key"]
+        settings_data["llm_api_key_masked"] = raw[:8] + "..." + raw[-4:]
+        del settings_data["llm_api_key"]
     return settings_data
 
 
