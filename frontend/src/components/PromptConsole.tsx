@@ -6,8 +6,9 @@ import { useWorkspaceStore } from '../store/useWorkspaceStore'
 import { API_BASE_URL } from '../lib/api'
 
 export const PromptConsole: React.FC = () => {
-    const { prompt, setPrompt, addMessage, updateAgentMessage, setSelectedUrn, activeSessionId, setActiveSessionId } = useWorkspaceStore()
+    const { prompt, setPrompt, addMessage, updateAgentMessage, setSelectedMetadata, activeSessionId, setActiveSessionId } = useWorkspaceStore()
     const [loading, setLoading] = useState(false)
+    const model = 'openai/gpt-4o'
 
     const handleSend = async (e?: React.FormEvent) => {
       if (e) e.preventDefault()
@@ -88,22 +89,30 @@ export const PromptConsole: React.FC = () => {
 
       updateAgentMessage(agentMsgId, {
         status: 'SUCCESS',
-        text: `Execution completed successfully. Synthesized dbt model for ${data.target_name || data.target_urn || 'target dataset'}.`,
+        text: `Execution completed. Synthesized dbt model for ${data.target_name || data.target_urn || 'target dataset'}.`,
         steps: serverSteps.length > 0 ? serverSteps : [
           { step: 1, type: 'INFO', message: `[${now()}] INFO: Execution finished.` },
           { step: 2, type: 'SUCCESS', message: `[${now()}] SUCCESS: Generated model for ${data.target_name || 'dataset'}.` }
         ],
         result: {
-          target_urn: data.target_urn || 'urn:li:dataset:(snowflake,prod.sales.fct_revenue)',
-          target_name: data.target_name || 'prod.sales.fct_revenue',
+          target_urn: data.target_urn || '',
+          target_name: data.target_name || '',
+          dataset_description: data.dataset_description || '',
           pii_columns: data.pii_columns || [],
+          schema_fields: data.schema_fields || [],
           sql: data.sql || '-- No SQL generated',
           dbt_yaml: data.dbt_yaml || ''
         }
       })
 
       if (data.target_urn) {
-        setSelectedUrn(data.target_urn, data.pii_columns || [])
+        setSelectedMetadata(
+          data.target_urn,
+          data.pii_columns || [],
+          data.schema_fields || [],
+          data.target_name || '',
+          data.dataset_description || ''
+        )
       }
 
     } catch (err: any) {
@@ -150,7 +159,7 @@ export const PromptConsole: React.FC = () => {
           <span className="w-1.5 h-1.5 rounded-full bg-accent" />
           <span>LLM Context: <strong className="text-gray-300 font-semibold">{formattedTokens} / 128k</strong> tokens</span>
         </div>
-        <span>DataHub GMS: Active</span>
+        <span className="text-gray-600">OpenRouter · {model}</span>
       </div>
     </div>
   )

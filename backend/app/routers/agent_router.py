@@ -132,7 +132,7 @@ async def execute_agent(
             llm_model=llm_model,
         )
 
-        validation = validator.validate_sql(generated["sql"], request.target_dialect)
+        validation = validator.validate_sql(generated["sql"], request.target_dialect, schema_fields=schema_fields)
         validation_message = "SQL AST and DuckDB sandbox validation passed." if validation["ast_valid"] and validation["sandbox_success"] else "SQL validation completed with issues; inspect validation details."
         add_trace("VALIDATION", validation_message)
 
@@ -149,6 +149,8 @@ async def execute_agent(
             "status": "completed",
             "target_urn": target_urn,
             "target_name": aspects.get("name", target_urn),
+            "dataset_description": (aspects.get("properties") or {}).get("description") or "",
+            "schema_fields": schema_fields,
             "pii_columns": governance["pii_columns"],
             "sql": generated["sql"],
             "dbt_yaml": generated["dbt_yaml"],

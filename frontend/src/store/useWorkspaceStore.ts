@@ -1,5 +1,12 @@
 import { create } from 'zustand'
 
+export interface SchemaField {
+  fieldPath: string;
+  nativeDataType: string;
+  description?: string;
+  tags?: { tags: { tag: { name: string } }[] };
+}
+
 export interface ExecutionStep {
   step: number;
   type: string;
@@ -16,7 +23,9 @@ export interface ChatMessage {
   result?: {
     target_urn: string;
     target_name: string;
+    dataset_description: string;
     pii_columns: string[];
+    schema_fields: SchemaField[];
     sql: string;
     dbt_yaml: string;
   };
@@ -28,12 +37,21 @@ interface WorkspaceState {
   isExecuting: boolean;
   selectedUrn: string | null;
   selectedPiiColumns: string[];
+  selectedSchemaFields: SchemaField[];
+  selectedDatasetName: string;
+  selectedDatasetDescription: string;
   activeSessionId: string | null;
-  
+
   setPrompt: (prompt: string) => void;
   addMessage: (message: ChatMessage) => void;
   updateAgentMessage: (id: string, updates: Partial<ChatMessage>) => void;
-  setSelectedUrn: (urn: string | null, piiColumns?: string[]) => void;
+  setSelectedMetadata: (
+    urn: string | null,
+    piiColumns?: string[],
+    schemaFields?: SchemaField[],
+    datasetName?: string,
+    description?: string
+  ) => void;
   setActiveSessionId: (id: string | null) => void;
   clearHistory: () => void;
 }
@@ -51,6 +69,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   isExecuting: false,
   selectedUrn: null,
   selectedPiiColumns: [],
+  selectedSchemaFields: [],
+  selectedDatasetName: '',
+  selectedDatasetDescription: '',
   activeSessionId: null,
 
   setPrompt: (prompt) => set({ prompt }),
@@ -58,7 +79,14 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   updateAgentMessage: (id, updates) => set((state) => ({
     messages: state.messages.map(msg => msg.id === id ? { ...msg, ...updates } : msg)
   })),
-  setSelectedUrn: (urn, piiColumns = []) => set({ selectedUrn: urn, selectedPiiColumns: piiColumns }),
+  setSelectedMetadata: (urn, piiColumns = [], schemaFields = [], datasetName = '', description = '') =>
+    set({
+      selectedUrn: urn,
+      selectedPiiColumns: piiColumns,
+      selectedSchemaFields: schemaFields,
+      selectedDatasetName: datasetName,
+      selectedDatasetDescription: description,
+    }),
   setActiveSessionId: (id) => set({ activeSessionId: id }),
   clearHistory: () => set({
     messages: [
@@ -71,6 +99,9 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
     ],
     selectedUrn: null,
     selectedPiiColumns: [],
-    activeSessionId: null
+    selectedSchemaFields: [],
+    selectedDatasetName: '',
+    selectedDatasetDescription: '',
+    activeSessionId: null,
   })
 }))
