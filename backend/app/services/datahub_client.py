@@ -5,9 +5,10 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+
 class DataHubClient:
     """Client for interacting with DataHub GMS via GraphQL and REST APIs."""
-    
+
     def __init__(self):
         self.gms_url = settings.DATAHUB_GMS_URL.rstrip('/')
         self.headers = {"Content-Type": "application/json"}
@@ -20,10 +21,13 @@ class DataHubClient:
             self.gms_url = gms_url.rstrip("/")
 
     async def search_entities(self, query: str, entity_types: List[str] = None) -> List[Dict[str, Any]]:
-        """Search DataHub catalog for datasets matching keywords."""
+        """Search DataHub catalog for datasets matching keywords.
+        
+        Raises RuntimeError if DataHub GMS is unreachable — no silent fallback.
+        """
         if not entity_types:
             entity_types = ["DATASET"]
-            
+
         graphql_query = """
         query searchCatalog($input: SearchInput!) {
           search(input: $input) {
@@ -48,7 +52,7 @@ class DataHubClient:
                 "count": 10
             }
         }
-        
+
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.post(
@@ -59,32 +63,35 @@ class DataHubClient:
                 if response.status_code == 200:
                     data = response.json()
                     if data.get("errors"):
-                        raise RuntimeError(data["errors"])
+                        raise RuntimeError(f"DataHub GraphQL error: {data['errors']}")
                     results = data.get("data", {}).get("search", {}).get("searchResults", [])
                     entities = [r.get("entity") for r in results if r.get("entity")]
                     if entities:
                         return entities
-        except Exception as e:
-            logger.warning(f"DataHub GraphQL query fallback triggered: {e}")
-            
-        # Mock fallback for offline hackathon testing
-        return [
-            {
-                "urn": "urn:li:dataset:(urn:li:dataPlatform:snowflake,analytics.prod.orders,PROD)",
-                "type": "DATASET",
-                "name": "analytics.prod.orders",
-                "properties": {"description": "Canonical production orders table"}
-            },
-            {
-                "urn": "urn:li:dataset:(urn:li:dataPlatform:snowflake,analytics.prod.customers,PROD)",
-                "type": "DATASET",
-                "name": "analytics.prod.customers",
-                "properties": {"description": "Canonical customer master data"}
-            }
-        ]
+                    raise RuntimeError(
+                        f"DataHub returned 0 results for query '{query}'. "
+                        "Ensure your DataHub instance has ingested datasets."
+                    )
+                else:
+                    raise RuntimeError(
+                        f"DataHub GMS responded with HTTP {response.status_code}. "
+                        f"Check that {self.gms_url} is reachable."
+                    )
+        except httpx.ConnectError:
+            raise RuntimeError(
+                f"Cannot reach DataHub GMS at {self.gms_url}. "
+                "Verify the DataHub URL is correct and the server is running."
+            )
+        except httpx.TimeoutException:
+            raise RuntimeError(
+                f"DataHub GMS at {self.gms_url} timed out after 10 seconds."
+            )
 
     async def get_dataset_aspects(self, urn: str) -> Dict[str, Any]:
-        """Fetch schema, governance tags, deprecation, and lineage aspects for a URN."""
+        """Fetch schema, governance tags, deprecation, and lineage aspects for a URN.
+        
+        Raises RuntimeError if DataHub GMS is unreachable — no silent fallback.
+        """
         graphql_query = """
         query getDataset($urn: String!) {
           dataset(urn: $urn) {
@@ -117,30 +124,45 @@ class DataHubClient:
                 if response.status_code == 200:
                     data = response.json()
                     if data.get("errors"):
-                        raise RuntimeError(data["errors"])
+                        raise RuntimeError(f"DataHub GraphQL error: {data['errors']}")
                     dataset = data.get("data", {}).get("dataset")
                     if dataset:
                         return dataset
-        except Exception as e:
-            logger.warning(f"Failed to fetch dataset aspects for {urn}: {e}")
+                    raise RuntimeError(
+                        f"DataHub returned no dataset for URN '{urn}'. "
+                        "Ensure this dataset has been ingested."
+                    )
+                else:
+                    raise RuntimeError(
+                        f"DataHub GMS responded with HTTP {response.status_code} "
+                        f"when fetching aspects for {urn}."
+                    )
+        except httpx.ConnectError:
+            raise RuntimeError(
+                f"Cannot reach DataHub GMS at {self.gms_url}. "
+                "Verify the DataHub URL is correct and the server is running."
+            )
+        except httpx.TimeoutException:
+            raise RuntimeError(
+                f"DataHub GMS at {self.gms_url} timed out while fetching aspects for {urn}."
+            )
 
-        # Return mock aspects for robust offline development
-        return {
-            "urn": urn,
-            "name": urn.split(",")[-2] if "," in urn else "analytics.prod.orders",
-            "properties": {"description": "Production orders table"},
-            "deprecation": {"deprecated": False, "note": None},
-            "tags": {"tags": [{"tag": {"name": "Tier-1"}}]},
-            "schemaMetadata": {
-                "fields": [
-                    {"fieldPath": "order_id", "nativeDataType": "VARCHAR", "description": "Primary key", "tags": {"tags": []}},
-                    {"fieldPath": "customer_id", "nativeDataType": "VARCHAR", "description": "Foreign key to customer", "tags": {"tags": []}},
-                    {"fieldPath": "email", "nativeDataType": "VARCHAR", "description": "Customer email", "tags": {"tags": [{"tag": {"name": "PII"}}]}},
-                    {"fieldPath": "amount", "nativeDataType": "NUMBER", "description": "Order dollar total", "tags": {"tags": []}},
-                    {"fieldPath": "order_date", "nativeDataType": "TIMESTAMP", "description": "Order placement timestamp", "tags": {"tags": []}}
-                ]
-            },
-            "upstreamLineage": {"upstreamNodes": []}
-        }
+    async def health_check(self) -> Dict[str, Any]:
+        """Probe DataHub GMS health endpoint. Returns reachability status."""
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(f"{self.gms_url}/health")
+                return {
+                    "reachable": response.status_code == 200,
+                    "status_code": response.status_code,
+                    "gms_url": self.gms_url,
+                }
+        except Exception as e:
+            return {
+                "reachable": False,
+                "error": str(e),
+                "gms_url": self.gms_url,
+            }
+
 
 datahub_client = DataHubClient()

@@ -126,11 +126,11 @@ OPENAI_API_KEY=your_openai_api_key
 
 ---
 
-## 🔒 Security & Enterprise Polish
+## 🔒 Security & Honesty
 
-- **Zero Information Leakage:** Internal table names and vendor-specific database references are abstracted into enterprise-grade telemetry labels (`Metadata Vault: OPERATIONAL`, `AES-256 Encrypted`).
-- **Encrypted Credentials:** API keys are encrypted at rest using enterprise hardware-backed security patterns.
-- **Hardware-Backed Isolation:** Full separation of transient chat state and persistent audit trails.
+- **API Keys via Environment Variables:** LLM and Supabase keys are stored as server-side environment variables on Render. They are never exposed to the browser or committed to Git.
+- **Metadata Change Proposal (MCP) Write-back:** Synex uses the `acryl-datahub` Python SDK to emit `MetadataChangeProposalWrapper` objects back to DataHub GMS — this is a real DataHub graph write-back, not a mock. Note: this is distinct from the Model Context Protocol (MCP) server standard.
+- **PII Enforcement:** PII detection runs server-side from DataHub tags and column name patterns before any SQL is generated. The LLM receives already-flagged columns and is instructed to mask them.
 
 ---
 

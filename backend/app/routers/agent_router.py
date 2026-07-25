@@ -86,10 +86,15 @@ async def execute_agent(
 
     try:
         db_settings = await get_latest_agent_settings()
-        # DataHub connection settings are controlled in Supabase without leaking API keys in responses.
-        if db_settings.get("datahub_gms_url"):
-            datahub_client.configure(db_settings["datahub_gms_url"])
-            mcp_emitter.configure(db_settings["datahub_gms_url"])
+        # Apply DataHub URL from Supabase settings if available
+        datahub_url = db_settings.get("datahub_url") or db_settings.get("datahub_gms_url")
+        if datahub_url:
+            datahub_client.configure(datahub_url)
+            mcp_emitter.configure(datahub_url)
+
+        # Extract LLM credentials from Supabase settings (fallback to env vars via generator)
+        llm_api_key = db_settings.get("llm_api_key") or None
+        llm_model = db_settings.get("llm_model") or None
 
         # Pull previous session memory if available
         previous_sql = None
@@ -97,28 +102,33 @@ async def execute_agent(
             previous_run = await get_last_run_for_session(request.session_id)
             if previous_run and previous_run.get("generated_sql"):
                 previous_sql = previous_run.get("generated_sql")
-                add_trace("MEMORY_LOAD", "Successfully loaded conversational memory from previous execution turn.")
+                add_trace("MEMORY_LOAD", "Loaded conversational context from previous session turn.")
 
-        add_trace("ENTITY_DISCOVERY", "Searching the DataHub metadata graph for matching datasets.")
+        add_trace("ENTITY_DISCOVERY", "Querying DataHub metadata graph for matching datasets.")
         entities = reasoner.rank_candidates(await datahub_client.search_entities(request.prompt))
         if not entities:
             raise RuntimeError("DataHub returned no dataset candidates.")
         target_urn = entities[0]["urn"]
 
-        add_trace("GOVERNANCE_AUDIT", f"Fetching schema, tags, deprecation, and lineage for {target_urn}.")
+        add_trace("GOVERNANCE_AUDIT", f"Fetching schema, PII tags, deprecation, and lineage for {target_urn}.")
         aspects = await datahub_client.get_dataset_aspects(target_urn)
         governance = reasoner.evaluate_governance(aspects)
         if governance["deprecated"]:
-            add_trace("WARNING", "Selected dataset is deprecated; generated output should be reviewed before use.")
+            add_trace("WARNING", "Selected dataset is marked deprecated in DataHub; review output before use.")
 
-        add_trace("LINEAGE_TRAVERSAL", f"Detected PII columns: {', '.join(governance['pii_columns']) or 'none'}.")
-        
+        schema_fields = aspects.get("schemaMetadata", {}).get("fields", [])
+        add_trace("LINEAGE_TRAVERSAL", f"Schema loaded: {len(schema_fields)} fields. PII columns: {', '.join(governance['pii_columns']) or 'none detected'}.")
+
+        add_trace("CODE_SYNTHESIS", f"Calling LLM (model: {llm_model or 'env default'}) with real DataHub metadata context.")
         generated = generator.generate_code_and_contract(
             table_name=aspects.get("name") or target_urn,
             pii_columns=governance["pii_columns"],
             dialect=request.target_dialect,
             previous_sql=previous_sql,
-            prompt=request.prompt
+            prompt=request.prompt,
+            schema_fields=schema_fields,
+            llm_api_key=llm_api_key,
+            llm_model=llm_model,
         )
 
         validation = validator.validate_sql(generated["sql"], request.target_dialect)

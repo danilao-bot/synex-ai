@@ -33,7 +33,7 @@ async def get_latest_agent_settings() -> dict[str, Any]:
     try:
         response = await asyncio.to_thread(
             lambda: client.table("synex_settings").select(
-                "datahub_gms_url,snowflake_account,openai_api_key,updated_at"
+                "datahub_url,datahub_pat,llm_provider,llm_model,llm_api_key,updated_at"
             ).order("updated_at", desc=True).limit(1).execute()
         )
         return response.data[0] if response.data else {}
