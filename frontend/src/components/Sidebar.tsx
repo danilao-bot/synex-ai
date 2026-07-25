@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Settings, Activity, Database, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useWorkspaceStore } from '../store/useWorkspaceStore'
+import { API_BASE_URL } from '../lib/api'
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname()
@@ -113,7 +114,7 @@ const RecentSessionsList: React.FC = () => {
   const [sessions, setSessions] = React.useState<any[]>([])
 
   React.useEffect(() => {
-    fetch('http://localhost:8000/api/v1/history')
+    fetch(`${API_BASE_URL}/api/v1/history`)
       .then(res => res.json())
       .then(data => {
         if (data.runs) setSessions(data.runs.slice(0, 6))
@@ -149,13 +150,21 @@ const RecentSessionsList: React.FC = () => {
               result: {
                 target_urn: s.target_urn || '',
                 target_name: s.target_name || '',
+                dataset_description: '',
                 pii_columns: s.pii_columns || [],
+                schema_fields: s.schema_fields || [],
                 sql: s.sql || '',
                 dbt_yaml: s.dbt_yaml || ''
               }
             })
             if (s.target_urn) {
-              store.setSelectedUrn(s.target_urn, s.pii_columns || [])
+              store.setSelectedMetadata(
+                s.target_urn,
+                s.pii_columns || [],
+                s.schema_fields || [],
+                s.target_name || '',
+                ''
+              )
             }
           }}
           className="px-2.5 py-1.5 rounded text-xs text-gray-400 hover:text-white hover:bg-surfaceBorder/40 transition cursor-pointer truncate flex items-center gap-2 font-sans"
