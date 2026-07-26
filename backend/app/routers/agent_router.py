@@ -96,13 +96,14 @@ async def execute_agent(
         # Extract LLM credentials from Supabase settings (fallback to env vars via generator)
         llm_api_key = db_settings.get("llm_api_key") or None
         llm_model = db_settings.get("llm_model") or None
+        llm_provider = db_settings.get("llm_provider") or "openrouter"
 
         # Pull previous session memory if available
         previous_sql = None
         if request.session_id:
             previous_run = await get_last_run_for_session(request.session_id)
-            if previous_run and previous_run.get("generated_sql"):
-                previous_sql = previous_run.get("generated_sql")
+            if previous_run and previous_run.get("sql"):  # Supabase column is 'sql'
+                previous_sql = previous_run.get("sql")
                 add_trace("MEMORY_LOAD", "Loaded conversational context from previous session turn.")
 
         add_trace("ENTITY_DISCOVERY", "Querying DataHub metadata graph for matching datasets.")
@@ -120,7 +121,7 @@ async def execute_agent(
         schema_fields = aspects.get("schemaMetadata", {}).get("fields", [])
         add_trace("LINEAGE_TRAVERSAL", f"Schema loaded: {len(schema_fields)} fields. PII columns: {', '.join(governance['pii_columns']) or 'none detected'}.")
 
-        add_trace("CODE_SYNTHESIS", f"Calling LLM (model: {llm_model or 'env default'}) with real DataHub metadata context.")
+        add_trace("CODE_SYNTHESIS", f"Calling LLM (provider: {llm_provider}, model: {llm_model or 'env default'}) with real DataHub metadata context.")
         generated = generator.generate_code_and_contract(
             table_name=aspects.get("name") or target_urn,
             pii_columns=governance["pii_columns"],
@@ -130,6 +131,7 @@ async def execute_agent(
             schema_fields=schema_fields,
             llm_api_key=llm_api_key,
             llm_model=llm_model,
+            llm_provider=llm_provider,
         )
 
         validation = validator.validate_sql(generated["sql"], request.target_dialect, schema_fields=schema_fields)
