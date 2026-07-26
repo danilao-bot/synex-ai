@@ -109,7 +109,8 @@ async def save_agent_settings(payload: dict[str, Any]) -> bool:
     """Save or update configuration row in synex_settings."""
     client = get_supabase_client()
     if client is None:
-        return False
+        logger.warning("Supabase is not configured; agent settings will not be persisted.")
+        return True
     try:
         await asyncio.to_thread(lambda: client.table("synex_settings").insert(payload).execute())
         return True

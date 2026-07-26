@@ -4,6 +4,8 @@ backend/venv/
 backend/.venv*/
 .venv/
 backend/.env
+backend/.env.example
+
 *.pyc
 
 # Node / Frontend
@@ -17,3 +19,4 @@ frontend/out/
 Thumbs.db
 .vscode/
 .idea/
+backend/.env.example
