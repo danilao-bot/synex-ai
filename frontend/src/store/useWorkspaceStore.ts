@@ -45,6 +45,13 @@ export interface ExecutionStep {
   step: number;
   type: string;
   message: string;
+  status?: string;
+  duration_ms?: number | null;
+  stage?: string;
+  stage_label?: string;
+  reasoning_summary?: string;
+  trust_score?: number | null;
+  warnings?: string[];
 }
 
 export interface ChatMessage {
@@ -54,6 +61,9 @@ export interface ChatMessage {
   timestamp: string;
   status?: 'RUNNING' | 'SUCCESS' | 'FAILED';
   steps?: ExecutionStep[];
+  workflowSteps?: any[];
+  plan?: { step: number; type: string; description: string }[];
+  clarifyingQuestions?: string[];
   result?: {
     run_id?: string;
     target_urn: string;
@@ -71,6 +81,12 @@ export interface ChatMessage {
     validation?: ValidationReport;
     proposed_writeback?: ProposedWriteback;
     writeback_status?: 'pending_approval' | 'emitted' | 'already_approved' | 'unavailable';
+    enriched_context?: any;
+    engineering_context?: any;
+    metadata_source?: string;
+    lineage_impact?: any;
+    quality_report?: any;
+    plan?: any[];
   };
 }
 

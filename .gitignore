@@ -1,22 +1,41 @@
-# Python / Backend
+# ── Python / Backend ──────────────────────────────────────────────────────────
 backend/__pycache__/
+backend/**/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
 backend/venv/
 backend/.venv*/
 .venv/
+
+# Secrets — NEVER commit real env files
 backend/.env
-backend/.env.example
+.env
+.env.local
+.env.*.local
 
-*.pyc
-
-# Node / Frontend
+# ── Node / Frontend ───────────────────────────────────────────────────────────
 frontend/node_modules/
 frontend/.next/
-frontend/.env.local
 frontend/out/
+frontend/.env.local
+frontend/tsconfig.tsbuildinfo
 
-# System / OS
+# ── Testing / Coverage ────────────────────────────────────────────────────────
+.pytest_cache/
+htmlcov/
+.coverage
+*.egg-info/
+dist/
+build/
+
+# ── OS / Editor ───────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
-backend/.env.example
+
+# ── DataHub local state ───────────────────────────────────────────────────────
+**/.datahubenv
+**/quickstart_version_mapping.yaml

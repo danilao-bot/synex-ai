@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Server, Key, BrainCircuit, Save, CheckCircle2, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/api'
+import { API_BASE_URL, fetchWithAuth } from '../../lib/api'
 
 // ── Provider → Model catalogue ─────────────────────────────────────────────
 const PROVIDER_MODELS: Record<string, { value: string; label: string }[]> = {
@@ -86,7 +86,7 @@ export default function SettingsPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/settings`)
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/v1/settings`)
       if (res.ok) {
         const data = await res.json()
         if (data.datahub_url)       setGmsUrl(data.datahub_url)
@@ -118,7 +118,7 @@ export default function SettingsPage() {
         body.llm_api_key = apiKey
       }
 
-      const res = await fetch(`${API_BASE_URL}/api/v1/settings`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/v1/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

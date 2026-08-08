@@ -6,7 +6,7 @@ import {
   Server, BrainCircuit, CheckCircle2, ArrowRight, ArrowLeft,
   Key, ShieldCheck, Database, Sparkles, Loader2, AlertCircle, Zap
 } from 'lucide-react'
-import { API_BASE_URL } from '../../lib/api'
+import { API_BASE_URL, fetchWithAuth } from '../../lib/api'
 
 interface FieldError {
   gmsUrl?: string
@@ -63,7 +63,7 @@ export default function OnboardingPage() {
     setIsSaving(true)
     setSaveError(null)
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/settings`, {
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/v1/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -329,7 +329,7 @@ export default function OnboardingPage() {
                 )}
                 <p className="text-xs text-gray-500 mt-3 font-sans flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-success inline shrink-0" />
-                  Keys are stored as server-side environment variables and never exposed to the browser.
+                  Keys are stored server-side in Supabase settings (masked on read) and never returned in full to the browser.
                 </p>
               </div>
 

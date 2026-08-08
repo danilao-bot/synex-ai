@@ -41,7 +41,13 @@ async def get_latest_agent_settings() -> dict[str, Any]:
             .execute()
         )
         if response.data:
-            return response.data[0]
+            res = response.data[0]
+            from app.security.encryption import decrypt_value
+            if "llm_api_key" in res:
+                res["llm_api_key"] = decrypt_value(res["llm_api_key"])
+            if "datahub_pat" in res:
+                res["datahub_pat"] = decrypt_value(res["datahub_pat"])
+            return res
     except Exception:
         logger.debug("Could not query synex_settings with updated_at; falling back to created_at")
 
@@ -54,7 +60,15 @@ async def get_latest_agent_settings() -> dict[str, Any]:
             .limit(1)
             .execute()
         )
-        return response.data[0] if response.data else {}
+        if response.data:
+            res = response.data[0]
+            from app.security.encryption import decrypt_value
+            if "llm_api_key" in res:
+                res["llm_api_key"] = decrypt_value(res["llm_api_key"])
+            if "datahub_pat" in res:
+                res["datahub_pat"] = decrypt_value(res["datahub_pat"])
+            return res
+        return {}
     except Exception:
         logger.exception("Could not read synex_settings")
         return {}
@@ -100,6 +114,17 @@ async def update_run(run_id: str | None, payload: dict[str, Any]) -> None:
     try:
         await asyncio.to_thread(lambda: client.table("synex_runs").update(payload).eq("id", run_id).execute())
     except Exception:
+        # Retry without optional Phase-2/3 columns if schema not migrated yet
+        optional = {"workflow_steps", "context_summary", "sql_explanation", "observability", "confidence"}
+        trimmed = {k: v for k, v in payload.items() if k not in optional}
+        if trimmed != payload:
+            try:
+                await asyncio.to_thread(
+                    lambda: client.table("synex_runs").update(trimmed).eq("id", run_id).execute()
+                )
+                return
+            except Exception:
+                pass
         logger.exception("Could not update synex_runs record %s", run_id)
 
 
@@ -123,7 +148,7 @@ async def get_run_history(limit: int = 20) -> list[dict[str, Any]]:
 
 
 async def get_last_run_for_session(session_id: str) -> dict[str, Any] | None:
-    """Fetch the most recent run for a specific session."""
+    """Fetch the most recent run for a specific session (used for conversational follow-ups)."""
     client = get_supabase_client()
     if client is None or not session_id:
         return None
@@ -149,7 +174,15 @@ async def save_agent_settings(payload: dict[str, Any]) -> bool:
         logger.warning("Supabase is not configured; agent settings will not be persisted.")
         return True
     try:
-        await asyncio.to_thread(lambda: client.table("synex_settings").insert(payload).execute())
+        # Create a copy to avoid mutating the original payload
+        db_payload = dict(payload)
+        from app.security.encryption import encrypt_value
+        if "llm_api_key" in db_payload:
+            db_payload["llm_api_key"] = encrypt_value(db_payload["llm_api_key"])
+        if "datahub_pat" in db_payload:
+            db_payload["datahub_pat"] = encrypt_value(db_payload["datahub_pat"])
+
+        await asyncio.to_thread(lambda: client.table("synex_settings").insert(db_payload).execute())
         return True
     except Exception:
         logger.exception("Could not save synex_settings")

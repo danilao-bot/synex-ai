@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Sidebar } from './Sidebar'
 import { SplashScreen } from './SplashScreen'
-import { API_BASE_URL } from '../lib/api'
+import { API_BASE_URL, fetchWithAuth } from '../lib/api'
 
 type AppState = 'splash' | 'navigating' | 'onboarding' | 'app'
 
@@ -26,7 +26,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
     // Check backend for saved settings
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/settings`)
+      const res = await fetchWithAuth(`${API_BASE_URL}/api/v1/settings`)
       if (res.ok) {
         const data = await res.json()
         const configured = Boolean(data.datahub_url || data.llm_api_key_masked)

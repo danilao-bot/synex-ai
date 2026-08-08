@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, Settings, Activity, Database, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useWorkspaceStore } from '../store/useWorkspaceStore'
-import { API_BASE_URL } from '../lib/api'
+import { API_BASE_URL, fetchWithAuth } from '../lib/api'
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname()
@@ -86,22 +86,25 @@ export const Sidebar: React.FC = () => {
         )}
       </nav>
 
-      {/* Bottom Status */}
+      {/* Bottom Status — local UI chrome only; not a live GMS health probe */}
       <div className="p-3 border-t border-surfaceBorder shrink-0">
         <div className="bg-surface/80 border border-surfaceBorder rounded-xl p-3.5 flex flex-col gap-2.5 shadow-inner">
           <div className="flex items-center justify-between min-h-[18px]">
-            {!isCollapsed && <span className="text-[10px] text-gray-400 font-mono tracking-widest uppercase">GMS STATUS</span>}
+            {!isCollapsed && <span className="text-[10px] text-gray-400 font-mono tracking-widest uppercase">WORKSPACE</span>}
             <div className={`flex items-center gap-1.5 ${isCollapsed ? 'mx-auto' : ''}`}>
-              <div className="w-2 h-2 rounded-full bg-success animate-pulse shadow-[0_0_8px_rgba(5,242,155,0.6)]" title="GMS Healthy" />
-              {!isCollapsed && <span className="text-[10px] font-sans font-semibold text-gray-300">Live</span>}
+              <div className="w-2 h-2 rounded-full bg-accent" title="UI ready" />
+              {!isCollapsed && <span className="text-[10px] font-sans font-semibold text-gray-300">Ready</span>}
             </div>
           </div>
 
           <div className="flex items-center justify-between min-h-[18px]">
-            {!isCollapsed && <span className="text-[10px] text-gray-400 font-mono tracking-widest uppercase">SANDBOX</span>}
-            <div className={`flex items-center gap-1.5 ${isCollapsed ? 'mx-auto' : ''}`}>
-              <div className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_rgba(0,229,255,0.6)]" title="Sandbox Ready" />
-              {!isCollapsed && <span className="text-[10px] font-sans font-semibold text-gray-300">Ready</span>}
+            {!isCollapsed && <span className="text-[10px] text-gray-400 font-mono tracking-widest uppercase">API</span>}
+            <div className={`flex items-center gap-1.5 ${isCollapsed ? 'mx-auto' : ''} max-w-[60%]`}>
+              {!isCollapsed && (
+                <span className="text-[10px] font-mono text-gray-400 truncate" title={API_BASE_URL}>
+                  {API_BASE_URL.replace(/^https?:\/\//, '')}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -114,7 +117,7 @@ const RecentSessionsList: React.FC = () => {
   const [sessions, setSessions] = React.useState<any[]>([])
 
   React.useEffect(() => {
-    fetch(`${API_BASE_URL}/api/v1/history`)
+    fetchWithAuth(`${API_BASE_URL}/api/v1/history`)
       .then(res => res.json())
       .then(data => {
         if (data.runs) setSessions(data.runs.slice(0, 6))

@@ -21,7 +21,15 @@ class ContextReasoner:
     ) -> Dict[str, Any]:
         """Score a single candidate dataset and produce selection/rejection reasons."""
         urn = candidate_metadata.get("urn", "")
-        name = candidate_metadata.get("name") or urn.split(":")[-1]
+        raw_name = candidate_metadata.get("name")
+        if isinstance(raw_name, str) and raw_name and raw_name.upper() not in {"PROD", "DEV", "TEST", "QA", "STAGING"}:
+            name = raw_name
+        elif urn and "dataset:(" in urn:
+            inner = urn.split("dataset:(", 1)[-1].rstrip(")")
+            parts = [p.strip() for p in inner.split(",")]
+            name = parts[-2] if len(parts) >= 3 else (parts[1] if len(parts) >= 2 else (parts[0] if parts else urn))
+        else:
+            name = (urn.split(":")[-1] if urn else "unknown")
         
         # 1. Deprecation Status
         deprecation_info = candidate_metadata.get("deprecation") or {}

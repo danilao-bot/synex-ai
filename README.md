@@ -1,219 +1,312 @@
-# ⚡ Synex — Autonomous AI Data Engineering Agent
+# Synex — Metadata-Aware Data Engineering Agent
 
-> **DataHub Agent Hackathon Submission** | Built by **Daniel** & **Precious**
-> **License:** [Apache 2.0](LICENSE) | **Live Demo:** [synex-ai.vercel.app](https://synex-ai.vercel.app) | **Backend:** [Render](https://synex-backend.onrender.com)
+> **DataHub Agent Hackathon Submission** · Built by **Daniel** & **Precious**
+> **License:** [Apache 2.0](LICENSE) · **Frontend:** [synex-ai.vercel.app](https://synex-ai.vercel.app) · **Backend:** [synex-backend.onrender.com](https://synex-backend.onrender.com)
 
-Synex is a **metadata-first autonomous AI Data Engineering Agent** powered by DataHub. It queries your DataHub GMS catalog to discover real schemas, PII tags, and lineage — then calls GPT-4o (or Claude, Groq, Mistral, DeepSeek) to generate production-ready dbt SQL models and `schema.yml` contracts grounded in actual metadata. No hallucinated schemas. No templates. Real code.
-
----
-
-## 🎬 Demo Video
-
-▶ **[Watch the 3-minute demo on YouTube](#)** ← *(link will be added before submission)*
+Synex is a **metadata-first AI agent** that reads your **DataHub GMS** catalog — schemas, tags, ownership, lineage — and generates **governed dbt SQL + `schema.yml`** contracts with deterministic PII masking, trust scoring, and AST validation. Every DataHub graph mutation is gated behind explicit human approval.
 
 ---
 
-## 🌟 What Makes Synex Different
+## Demo Video
 
-| Without Synex | With Synex |
-|---|---|
-| Engineer manually reads DataHub, copy-pastes schema | Agent queries DataHub GMS, reads real fields automatically |
-| LLM hallucinates column names | SQL grounded in actual `schemaMetadata` fields from DataHub |
-| PII masking is easy to forget | Synex auto-detects PII from DataHub tags + column name patterns, injects SHA2 |
-| Each prompt starts from scratch | Session memory loads previous SQL from Supabase per `session_id` |
-| No audit trail | Every run persisted to Supabase with full trace log, SQL, and dbt contract |
-| Code lives in a chat | dbt model written back to DataHub via real MCP (Metadata Change Proposal) |
+[![Synex Demo](https://img.shields.io/badge/▶_Watch_Demo-YouTube-red?style=for-the-badge)](https://www.youtube.com/)
+
+> 3-minute walkthrough: prompt → metadata discovery → trust scoring → SQL generation → PII enforcement → approve writeback.
 
 ---
 
-## 🏗️ System Architecture
+## What Synex Does
 
 ```
 User Prompt
-     │
-     ▼
-┌─────────────────────────────────────────────────────────┐
-│  Synex Frontend (Next.js — Vercel)                      │
-│  Workspace Studio · Run History · Settings              │
-└──────────────────────────┬──────────────────────────────┘
-                           │ POST /api/v1/run
-                           ▼
-┌─────────────────────────────────────────────────────────┐
-│  Synex Backend (FastAPI — Render)                       │
-│                                                         │
-│  1. ENTITY_DISCOVERY   → DataHub GMS /entities/search  │
-│  2. GOVERNANCE_AUDIT   → DataHub GMS /aspects          │
-│  3. LINEAGE_TRAVERSAL  → Schema fields + PII detection │
-│  4. CODE_SYNTHESIS     → OpenRouter LLM (GPT-4o)       │
-│  5. AST_VALIDATION     → SQLGlot + DuckDB sandbox      │
-│  6. DATAHUB_WRITEBACK  → acryl-datahub MCP emit        │
-│                                                         │
-│  Session Memory: Supabase synex_runs (per session_id)  │
-└──────────────┬──────────────────────────────────────────┘
-               │
-   ┌───────────┼───────────────┐
-   ▼           ▼               ▼
-DataHub GMS  OpenRouter    Supabase
-(Metadata)  (GPT-4o/etc)  (Persistence)
+    │
+    ▼
+Intent Analysis          ← understands what dataset/model is needed
+    │
+    ▼
+DataHub Search           ← queries GMS catalog (ACK MCP → GraphQL fallback)
+    │
+    ▼
+Trust Scoring            ← ranks candidates by certification, lineage, quality
+    │
+    ▼
+Lineage Analysis         ← maps upstream risks + downstream blast radius
+    │
+    ▼
+Quality Assessment       ← checks assertions, incidents, profiling
+    │
+    ▼
+Context Enrichment       ← pulls schema, docs, glossary, production SQL patterns
+    │
+    ▼
+dbt SQL Generation       ← LLM synthesizes dialect-correct SQL grounded in metadata
+    │
+    ▼
+Governance Validation    ← SQLGlot AST + DuckDB sandbox + PII hashing + YAML checks
+    │
+    ▼
+Human Approval Gate      ← user reviews and approves before any DataHub mutation
+    │
+    ▼
+DataHub Writeback        ← emits description, tags via ACK MCP tools
 ```
 
 ---
 
-## 🛠️ Technology Stack
+## Architecture
 
-| Layer | Technologies |
-|---|---|
-| **Frontend** | Next.js 14 (App Router), TypeScript, Zustand, ReactFlow, Monaco Editor |
-| **Backend** | Python 3.11, FastAPI, Uvicorn, Pydantic v2 |
-| **Metadata Graph** | DataHub GMS — `acryl-datahub` Python SDK |
-| **LLM Providers** | OpenRouter, OpenAI, Anthropic, Groq, Mistral, DeepSeek, Together |
-| **SQL Validation** | SQLGlot (AST) + DuckDB (in-memory sandbox with real DataHub schema) |
-| **Persistence** | Supabase (PostgreSQL) — runs, settings, session memory |
-| **Deployments** | Vercel (frontend) · Render (backend) |
+```mermaid
+flowchart TD
+  UI[Next.js Frontend]
+  API[FastAPI Backend]
+  Engine[WorkflowEngine]
+  Intent[IntentAnalyzer]
+  Search[SearchWorkflow]
+  Trust[TrustWorkflow]
+  Lineage[LineageWorkflow]
+  Quality[QualityWorkflow]
+  Enrich[EnrichmentWorkflow]
+  Context[ContextAssembly]
+  Plan[PlanningWorkflow]
+  Gen[GenerationWorkflow]
+  Val[ValidationWorkflow]
+  Approve[ApprovalWorkflow]
+  Write[WritebackWorkflow]
+  Svc[DataHubService ACK MCP GraphQL]
+  LLM[LLM Provider]
+  DB[(Supabase)]
+
+  UI -->|SSE /api/v1/agent/run| API
+  UI -->|POST writeback/approve| API
+  API --> Engine
+  Engine --> Intent --> Search --> Trust --> Lineage --> Quality --> Enrich --> Context --> Plan --> Gen --> Val --> Approve --> Write
+  Search --> Svc
+  Trust --> Svc
+  Enrich --> Svc
+  Gen --> LLM
+  API --> DB
+  Write -->|human gated| Svc
+```
 
 ---
 
-## 🚀 Quickstart (Local)
+## Capabilities
+
+| Capability | Status |
+|---|---|
+| DataHub Agent Context Kit MCP tools (`search`, `get_entities`, `get_lineage`, …) | ✅ Implemented (primary) |
+| GraphQL fallback when ACK unavailable | ✅ Implemented |
+| Deterministic trust scoring & candidate ranking | ✅ Implemented |
+| Multi-provider LLM SQL + schema.yml generation | ✅ Implemented |
+| SQLGlot AST + DuckDB sandbox + YAML + PII checks | ✅ Implemented |
+| Session memory (`session_id` → prior SQL + structured context) | ✅ Implemented |
+| Multi-aspect write-back proposals + human approval gate | ✅ Implemented |
+| Run history & settings in Supabase | ✅ Implemented |
+| Live lineage graph from run payload | ✅ Implemented when edges exist |
+| Autonomous 15-stage workflow engine | ✅ Implemented |
+| Live SSE workflow timeline UI | ✅ Implemented |
+| Clarifying questions on ambiguous prompts | ✅ Implemented |
+| Engineering Context Engine (SQL profile, docs, glossary) | ✅ Implemented |
+| Validation retry + provider fallback + model selection | ✅ Implemented |
+| Self-critique + confidence + observability metrics | ✅ Implemented |
+
+---
+
+## Tech Stack
+
+| Layer | Technologies |
+|---|---|
+| Frontend | Next.js 14 (App Router), TypeScript, Zustand, ReactFlow, Monaco Editor |
+| Backend | Python 3.11, FastAPI, Uvicorn, Pydantic v2 |
+| Metadata | DataHub Agent Context Kit + GraphQL fallback + acryl-datahub emitter |
+| LLM | OpenRouter, OpenAI, Anthropic, Groq, Mistral, DeepSeek |
+| Validation | SQLGlot + DuckDB + PyYAML |
+| Persistence | Supabase (PostgreSQL) |
+| Deploy | Vercel (frontend) · Render (backend) |
+
+---
+
+## Quickstart (local)
 
 ### Prerequisites
-- Node.js 18+ and `npm`
-- Python 3.11+ and `pip`
-- A Supabase project ([supabase.com](https://supabase.com))
-- A DataHub GMS instance (local Docker or cloud)
-- An LLM API key (OpenRouter recommended)
+- Node.js 18+ / npm
+- Python 3.11 / pip
+- Supabase project (free tier works)
+- LLM API key — [OpenRouter](https://openrouter.ai) recommended (one key, many models)
+- DataHub GMS — local Docker **or** cloud (optional — Synex degrades gracefully)
 
-### 1. Clone the repo
+### 1. Clone
 ```bash
 git clone https://github.com/danilao-bot/synex-ai.git
 cd synex-ai
 ```
 
-### 2. Supabase — Create tables
-Run in your Supabase SQL editor:
+### 2. Supabase tables
+Run in your [Supabase SQL Editor](https://supabase.com/dashboard):
+
 ```sql
--- Execution run history + session memory
-CREATE TABLE public.synex_runs (
-  id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  session_id  text,
-  prompt      text,
-  status      text,
-  target_urn  text,
-  target_name text,
-  pii_columns jsonb,
-  sql         text,
-  dbt_yaml    text,
-  trace_logs  jsonb,
-  created_at  timestamptz DEFAULT now()
+CREATE TABLE public.synex_settings (
+  id uuid NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+  datahub_url text NOT NULL DEFAULT 'http://localhost:8080',
+  datahub_pat text,
+  llm_provider text NOT NULL DEFAULT 'openrouter',
+  llm_model text NOT NULL DEFAULT 'openai/gpt-4o',
+  llm_api_key text,
+  updated_at timestamptz DEFAULT timezone('utc', now()),
+  created_at timestamptz DEFAULT now(),
+  CONSTRAINT synex_settings_pkey PRIMARY KEY (id)
 );
 
--- Agent configuration / credentials
-CREATE TABLE public.synex_settings (
-  id           uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  datahub_url  text,
-  datahub_pat  text,
-  llm_provider text DEFAULT 'openrouter',
-  llm_model    text DEFAULT 'openai/gpt-4o',
-  llm_api_key  text,
-  created_at   timestamptz DEFAULT now()
+CREATE TABLE public.synex_runs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  status text NOT NULL CHECK (status = ANY (ARRAY['RUNNING','SUCCESS','FAILED'])),
+  prompt text NOT NULL,
+  target_urn text,
+  sql text,
+  pii_columns jsonb DEFAULT '[]'::jsonb,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  session_id text,
+  target_name text,
+  dbt_yaml text,
+  trace_logs jsonb DEFAULT '[]'::jsonb,
+  writeback_status text DEFAULT 'pending_approval',
+  writeback_approved boolean DEFAULT false,
+  writeback_approved_by text,
+  writeback_approved_at timestamptz,
+  CONSTRAINT synex_runs_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS public.synex_audit_logs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  run_id uuid,
+  event_type text,
+  payload jsonb,
+  created_at timestamptz DEFAULT timezone('utc', now()),
+  CONSTRAINT synex_audit_logs_pkey PRIMARY KEY (id)
 );
 ```
 
-### 3. Backend setup
+### 3. Backend
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate       # Windows: venv\Scripts\activate
+# Windows: venv\Scripts\activate  |  Mac/Linux: source venv/bin/activate
 pip install -r requirements.txt
-
-# Create backend/.env
-cat > .env <<EOF
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-LLM_API_KEY=sk-or-v1-...          # OpenRouter key (or your provider's key)
-LLM_MODEL=openai/gpt-4o
-OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
-DATAHUB_GMS_URL=http://localhost:8080
-EOF
-
-# Start server
+cp .env.example .env   # fill in your keys
 uvicorn app.main:app --port 8000 --reload
 ```
 
-### 4. Frontend setup
+### 4. Frontend
 ```bash
 cd frontend
 npm install
-
-# Create frontend/.env.local
-echo "NEXT_PUBLIC_API_BASE_URL=http://localhost:8000" > .env.local
-
+echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000) and start prompting.
 
----
-
-## ⚙️ Environment Variables
-
-### Backend (`backend/.env` or Render dashboard)
-
-| Variable | Description |
-|---|---|
-| `SUPABASE_URL` | Your Supabase project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (server-side only) |
-| `LLM_API_KEY` | API key for your LLM provider |
-| `LLM_MODEL` | Model ID e.g. `openai/gpt-4o` |
-| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` (for OpenRouter) |
-| `DATAHUB_GMS_URL` | Your DataHub GMS endpoint e.g. `http://localhost:8080` |
-
-### Frontend (`frontend/.env.local` or Vercel dashboard)
-
-| Variable | Description |
-|---|---|
-| `NEXT_PUBLIC_API_BASE_URL` | Backend URL e.g. `https://your-backend.onrender.com` |
-
----
-
-## 🔌 DataHub Integration
-
-Synex uses the **`acryl-datahub` Python SDK** to:
-
-1. **Search entities** — `datahub_client.search_entities(prompt)` → finds matching datasets
-2. **Fetch aspects** — `datahub_client.get_dataset_aspects(urn)` → reads `schemaMetadata`, `deprecation`, `ownership`, `datasetProperties`
-3. **Write back** — `mcp_emitter.emit_documentation_update(urn, doc)` → emits a real `MetadataChangeProposalWrapper` to document the generated model
-
-**No DataHub instance?** The system surfaces a clear error rather than returning fake data.
-For the demo, use a local DataHub via Docker:
+### 5. DataHub (optional)
 ```bash
 pip install acryl-datahub
-datahub docker quickstart
+datahub docker quickstart   # spins up local DataHub on port 8080
 ```
-This spins up a full DataHub stack at `http://localhost:8080` with sample datasets.
+
+Without DataHub, Synex uses a built-in mock dataset to demonstrate the full pipeline.
 
 ---
 
-## 📁 Sample Outputs
+## Environment Variables
 
-See the [`examples/`](examples/) folder for real outputs generated by Synex:
-- [`fct_revenue_model.sql`](examples/fct_revenue_model.sql) — Production Snowflake dbt model with PII masking and rolling averages
-- [`fct_revenue_schema.yml`](examples/fct_revenue_schema.yml) — dbt `schema.yml` contract with column tests and governance annotations
+### Backend (`backend/.env`)
+
+| Variable | Required | Description |
+|---|---|---|
+| `SUPABASE_URL` | ✅ | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Service role key (server-side only) |
+| `LLM_API_KEY` | ✅ | Your LLM provider API key |
+| `LLM_PROVIDER` | ✅ | `openrouter` (default), `openai`, `anthropic`, `groq` |
+| `LLM_MODEL` | ✅ | Model ID e.g. `openai/gpt-4o` |
+| `DATAHUB_GMS_URL` | | DataHub GMS endpoint (default: `http://localhost:8080`) |
+| `DATAHUB_PAT` | | DataHub personal access token |
+| `DATAHUB_MCP_MUTATIONS_ENABLED` | | Set `true` to enable approved write-back |
+| `FRONTEND_ORIGINS` | | CORS allowlist e.g. `http://localhost:3000` |
+
+### Frontend (`frontend/.env.local`)
+
+| Variable | Required | Description |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | ✅ | Backend base URL e.g. `http://localhost:8000` |
 
 ---
 
-## 🔒 Security & Honesty
+## API Summary
 
-- **API keys** are stored as server-side environment variables — never in the browser or Git
-- **No mock fallbacks** — when DataHub is unreachable, the system raises a clear error
-- **MCP write-back** uses the DataHub Python SDK (`MetadataChangeProposalWrapper`) — a real graph write, not a REST call
-- **PII detection** runs server-side from actual DataHub tags + column name regex patterns
+Full contract: [`backend/API_CONTRACT.md`](backend/API_CONTRACT.md)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/health` | Backend health probe |
+| `POST` | `/api/v1/agent/run` | SSE streaming agent run |
+| `POST` | `/api/v1/run` | JSON (non-streaming) agent run |
+| `POST` | `/api/v1/runs/{id}/writeback/approve` | Approve & emit DataHub mutations |
+| `GET` | `/api/v1/history` | Recent runs |
+| `GET/POST` | `/api/v1/settings` | Read/save agent settings |
 
 ---
 
-## 📄 License
+## Project Structure
 
-Apache License 2.0 — see [`LICENSE`](LICENSE)
+```
+synex-ai/
+├── LICENSE                        # Apache 2.0
+├── README.md
+├── backend/
+│   ├── requirements.txt
+│   ├── .env.example
+│   └── app/
+│       ├── main.py
+│       ├── agent/                 # generator, validator, planner, reasoner
+│       ├── workflow/              # 15-stage WorkflowEngine
+│       ├── context/               # Engineering Context Engine
+│       ├── memory/                # Structured session memory
+│       ├── llm/                   # Providers, retries, fallback, critique
+│       ├── security/              # SQL safety checks
+│       └── services/              # DataHub ACK/MCP/GraphQL + mutations
+└── frontend/
+    └── src/
+        ├── app/                   # Next.js App Router pages
+        ├── components/            # ChatThread, CodeSandbox, LineageGraph, …
+        ├── store/                 # Zustand workspace store
+        └── lib/                   # API client
+```
 
 ---
 
-<p align="center">Built with ❤️ for the <strong>DataHub Agent Hackathon</strong> by <strong>Daniel</strong> & <strong>Precious</strong></p>
+## Security
+
+- LLM and DataHub keys belong in server env or `synex_settings` — the GET `/settings` endpoint masks keys.
+- Write-back requires an explicit `/writeback/approve` call — generation alone never mutates DataHub.
+- No application-level auth in the demo — do not expose secrets on a shared instance without adding auth.
+
+---
+
+## Contributing
+
+Pull requests welcome. Please open an issue first for significant changes.
+
+1. Fork the repo
+2. Create a branch: `git checkout -b feat/your-feature`
+3. Commit: `git commit -m 'feat: your feature'`
+4. Push: `git push origin feat/your-feature`
+5. Open a Pull Request
+
+---
+
+## License
+
+Apache License 2.0 — see [`LICENSE`](LICENSE).
+
+---
+
+<p align="center">Built for the <strong>DataHub Agent Hackathon</strong> by <strong>Daniel</strong> &amp; <strong>Precious</strong></p>

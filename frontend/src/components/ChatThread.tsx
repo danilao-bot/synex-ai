@@ -1,168 +1,219 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
-import { Terminal, Database, GitBranch, TerminalSquare, AlertTriangle, Play, ChevronDown, ChevronUp } from 'lucide-react'
+import React, { useEffect, useRef } from 'react'
+import {
+  Check, Loader2, AlertTriangle, Clock, Circle,
+  ChevronDown, ChevronUp, Shield, ArrowRight
+} from 'lucide-react'
 import { useWorkspaceStore, ChatMessage } from '../store/useWorkspaceStore'
-import { LineageGraph } from './LineageGraph'
-import { CodeSandbox } from './CodeSandbox'
 
 export const ChatThread: React.FC = () => {
   const { messages } = useWorkspaceStore()
-  const threadEndRef = useRef<HTMLDivElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    threadEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 custom-scrollbar">
-      <div className="max-w-4xl mx-auto space-y-6">
-        
-        {/* Empty State */}
+    <div className="flex-1 overflow-y-auto px-5 py-6 custom-scrollbar">
+      <div className="max-w-2xl mx-auto space-y-4">
+
+        {/* ── Empty state ───────────────────────────────────────────────── */}
         {messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center pt-24 pb-12 animate-fadeIn text-center">
-            <div className="w-16 h-16 rounded-2xl bg-surface border border-surfaceBorder flex items-center justify-center mb-6 shadow-xl relative">
-              {/* Bespoke Agent Motif: Lineage Thread */}
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary">
+          <div className="flex flex-col items-center justify-center pt-24 text-center">
+            <div className="w-12 h-12 rounded-2xl bg-surface border border-surfaceBorder flex items-center justify-center mb-4 relative">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="text-primary relative z-10">
                 <circle cx="18" cy="6" r="3" fill="currentColor"/>
                 <circle cx="6" cy="18" r="3" fill="currentColor"/>
                 <circle cx="12" cy="12" r="3" fill="currentColor"/>
                 <path d="M16.5 7.5L13.5 10.5M10.5 13.5L7.5 16.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
-              {/* Glowing backplate effect */}
-              <div className="absolute inset-0 bg-primary opacity-20 blur-xl rounded-full"></div>
+              <div className="absolute inset-0 bg-primary opacity-15 blur-xl rounded-full"/>
             </div>
-            <h2 className="text-2xl font-display font-semibold text-white mb-2">How can Synex help you today?</h2>
-            <p className="text-gray-400 font-sans mb-10 max-w-md">I am your metadata-aware data engineering agent. I can build models, trace lineage, and analyze dataset aspects.</p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-3xl">
-              {[
-                { title: "Model a dataset", desc: "Generate a new dbt model" },
-                { title: "Trace lineage", desc: "For core.fct_orders" },
-                { title: "Audit aspect", desc: "Check quality on users_table" }
-              ].map((action, i) => (
-                <button key={i} className="flex flex-col items-start p-4 rounded-xl bg-surface border border-surfaceBorder hover:border-primary/50 hover:bg-surfaceBorder/30 transition-all text-left group">
-                  <span className="text-sm font-semibold text-white group-hover:text-primary transition-colors">{action.title}</span>
-                  <span className="text-xs text-gray-500 mt-1">{action.desc}</span>
-                </button>
-              ))}
-            </div>
+            <h2 className="text-lg font-display font-semibold text-white mb-1">Hello! I am Synex</h2>
+            <p className="text-gray-500 text-sm font-sans max-w-xs leading-relaxed">
+              Your DataHub Governed dbt Change Agent. Ask me to build a model, inspect trust scores, or trace lineage.
+            </p>
           </div>
         )}
 
-        {messages.map((msg, idx) => (
-          <div key={msg.id} className="animate-fadeIn">
+        {/* ── Messages ─────────────────────────────────────────────────── */}
+        {messages.map((msg) => (
+          <div key={msg.id}>
             {msg.sender === 'user' ? (
-              /* User Chat Bubble */
-              <div className="flex justify-end">
-                <div className="max-w-2xl bg-surface border border-surfaceBorder rounded-2xl rounded-tr-none px-5 py-3 text-[15px] text-gray-100 font-sans shadow-md border-r-4 border-r-primary">
-                  {msg.text}
-                </div>
-              </div>
+              <UserBubble text={msg.text} />
             ) : (
-              /* Agent Chat Block */
-              <div className="flex gap-4 items-start">
-                {/* Agent Icon (Bespoke Motif) */}
-                <div className="w-8 h-8 rounded-lg bg-surface border border-surfaceBorder flex items-center justify-center shrink-0 shadow-lg relative">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-primary relative z-10">
-                    <circle cx="18" cy="6" r="3" fill="currentColor"/>
-                    <circle cx="6" cy="18" r="3" fill="currentColor"/>
-                    <circle cx="12" cy="12" r="3" fill="currentColor"/>
-                    <path d="M16.5 7.5L13.5 10.5M10.5 13.5L7.5 16.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                  <div className="absolute inset-0 bg-primary opacity-20 blur-md rounded-full"></div>
-                </div>
-                
-                {/* Agent Content */}
-                <div className="flex-1 space-y-4">
-                  <div className="text-[15px] text-gray-300 leading-relaxed font-sans">
-                    {msg.text}
-                  </div>
-
-                  {/* Render Logs (Trace Logs) */}
-                  {msg.steps && msg.steps.length > 0 && (
-                    <CollapsibleCard title="System Trace Log" icon={<Terminal className="w-3.5 h-3.5" />} defaultExpanded={msg.status === 'RUNNING'}>
-                      <div className="font-mono text-[11px] leading-relaxed space-y-1 text-gray-400">
-                        {msg.steps.map((s, i) => {
-                          let colorClass = "text-accent"
-                          if (s.message.includes('SUCCESS')) colorClass = "text-success"
-                          if (s.message.includes('WARN')) colorClass = "text-warning"
-                          if (s.message.includes('ERROR')) colorClass = "text-danger"
-                          return (
-                            <div key={i}>
-                              <span className={colorClass}>{s.message.split(': ')[0]}:</span> {s.message.split(': ').slice(1).join(': ')}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </CollapsibleCard>
-                  )}
-
-                  {/* Render Lineage & Code (If result generated) */}
-                  {msg.result && (
-                    <div className="space-y-4">
-                      {/* Collapsible Lineage */}
-                      <CollapsibleCard 
-                        title={`Resolved Lineage Map (${msg.result.target_name || 'Graph'})`} 
-                        icon={<GitBranch className="w-3.5 h-3.5" />} 
-                        defaultExpanded={idx === messages.length - 1}
-                      >
-                        <div className="h-64 rounded-lg overflow-hidden border border-surfaceBorder bg-background/50">
-                          <LineageGraph />
-                        </div>
-                      </CollapsibleCard>
-
-                      {/* Code Output Editor */}
-                      <CollapsibleCard 
-                        title={`Synthesized dbt Model & Contract (${msg.result.target_name || 'Code'})`} 
-                        icon={<TerminalSquare className="w-3.5 h-3.5" />} 
-                        defaultExpanded={idx === messages.length - 1}
-                      >
-                        <div className="h-[350px] border border-surfaceBorder rounded-xl overflow-hidden shadow-lg">
-                          <CodeSandbox />
-                        </div>
-                      </CollapsibleCard>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <AgentBubble msg={msg} />
             )}
           </div>
         ))}
-        <div ref={threadEndRef} />
+
+        <div ref={bottomRef} />
       </div>
     </div>
   )
 }
 
-/* Collapsible Card Component */
-interface CollapsibleProps {
-  title: string
-  icon: React.ReactNode
-  children: React.ReactNode
-  defaultExpanded?: boolean
-}
+/* ── User bubble ────────────────────────────────────────────────────────── */
+const UserBubble: React.FC<{ text: string }> = ({ text }) => (
+  <div className="flex justify-end">
+    <div className="max-w-md bg-[#1a2340] border border-primary/20 rounded-2xl rounded-tr-sm px-4 py-2.5 text-[14px] text-gray-100 font-sans leading-relaxed shadow-sm">
+      {text}
+    </div>
+  </div>
+)
 
-const CollapsibleCard: React.FC<CollapsibleProps> = ({ title, icon, children, defaultExpanded = false }) => {
-  const [expanded, setExpanded] = useState(defaultExpanded)
+/* ── Agent bubble ────────────────────────────────────────────────────────── */
+const AgentBubble: React.FC<{ msg: ChatMessage }> = ({ msg }) => {
+  const isRunning = msg.status === 'RUNNING'
+  const isFailed  = msg.status === 'FAILED'
+  const steps     = msg.workflowSteps || []
+  const hasResult = !!(msg.result?.sql && msg.result.sql !== '-- No SQL generated')
 
   return (
-    <div className="bg-[#050811] border border-surfaceBorder/60 rounded-xl overflow-hidden shadow-md flex flex-col">
-      <div 
-        onClick={() => setExpanded(!expanded)}
-        className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-surfaceBorder/20 transition-all duration-200"
-      >
-        <div className="flex items-center gap-2 text-xs font-bold text-gray-300 uppercase tracking-widest">
-          {icon}
-          {title}
-        </div>
-        <div className="text-gray-500">
-          {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </div>
+    <div className="flex gap-2.5 items-start">
+      {/* Avatar */}
+      <div className="w-7 h-7 rounded-lg bg-[#0D1527] border border-surfaceBorder flex items-center justify-center shrink-0 mt-0.5 relative">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="text-primary relative z-10">
+          <circle cx="18" cy="6" r="3" fill="currentColor"/>
+          <circle cx="6" cy="18" r="3" fill="currentColor"/>
+          <circle cx="12" cy="12" r="3" fill="currentColor"/>
+          <path d="M16.5 7.5L13.5 10.5M10.5 13.5L7.5 16.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
       </div>
-      {expanded && (
-        <div className="p-4 border-t border-surfaceBorder/30">
-          {children}
+
+      <div className="flex-1 space-y-2 min-w-0">
+        {/* Text bubble */}
+        <div className={`inline-block rounded-2xl rounded-tl-sm px-4 py-2.5 text-[14px] font-sans leading-relaxed max-w-md ${
+          isFailed
+            ? 'bg-danger/10 border border-danger/25 text-danger/90'
+            : 'bg-[#0D1527] border border-surfaceBorder/80 text-gray-200'
+        }`}>
+          {isRunning && <Loader2 className="w-3 h-3 text-primary animate-spin inline mr-2 mb-0.5" />}
+          {msg.text}
+        </div>
+
+        {/* Workflow timeline strip — only shows during/after run */}
+        {(steps.length > 0 || isRunning) && (
+          <WorkflowStrip steps={steps} running={isRunning} />
+        )}
+
+        {/* Completion CTA — points user to right panel */}
+        {hasResult && !isRunning && (
+          <div className="flex items-center gap-2 text-[12px] font-sans text-gray-400 pl-1">
+            <ArrowRight className="w-3.5 h-3.5 text-accent shrink-0" />
+            <span>Model ready — review code and approve in the <strong className="text-accent">panel →</strong></span>
+          </div>
+        )}
+
+        {/* Clarifying questions */}
+        {msg.clarifyingQuestions && msg.clarifyingQuestions.length > 0 && (
+          <ul className="pl-1 space-y-1">
+            {msg.clarifyingQuestions.map((q, i) => (
+              <li key={i} className="text-[13px] text-gray-300 flex gap-2">
+                <span className="text-accent shrink-0">{i + 1}.</span>
+                {q}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ── Workflow strip ──────────────────────────────────────────────────────── */
+const ICON = (status?: string) => {
+  const s = (status || '').toLowerCase()
+  if (s === 'completed') return <Check className="w-2.5 h-2.5 text-success" />
+  if (s === 'running')   return <Loader2 className="w-2.5 h-2.5 text-primary animate-spin" />
+  if (s === 'waiting')   return <Clock className="w-2.5 h-2.5 text-warning" />
+  if (s === 'failed')    return <AlertTriangle className="w-2.5 h-2.5 text-danger" />
+  return <Circle className="w-2.5 h-2.5 text-gray-700" />
+}
+
+const WorkflowStrip: React.FC<{ steps: any[]; running: boolean }> = ({ steps, running }) => {
+  const [open, setOpen] = React.useState(running) // auto-open while running
+
+  React.useEffect(() => {
+    if (!running && open) {
+      // auto-collapse 1s after completion
+      const t = setTimeout(() => setOpen(false), 1200)
+      return () => clearTimeout(t)
+    }
+  }, [running])
+
+  const done  = steps.filter(s => s.status === 'completed').length
+  const total = steps.length
+  const failed = steps.filter(s => s.status === 'failed').length
+
+  return (
+    <div className="border border-surfaceBorder/50 rounded-xl overflow-hidden bg-[#060d1a] w-full max-w-md">
+      {/* Header */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-3 py-2 hover:bg-white/[0.02] transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          {running
+            ? <Loader2 className="w-3 h-3 text-primary animate-spin" />
+            : failed > 0
+              ? <AlertTriangle className="w-3 h-3 text-danger" />
+              : <Check className="w-3 h-3 text-success" />
+          }
+          <span className="text-[11px] font-mono text-gray-400">
+            {running ? 'Running workflow…' : failed > 0 ? `Workflow — ${failed} failed` : 'Workflow complete'}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          {total > 0 && (
+            <span className="text-[10px] font-mono text-gray-600">{done}/{total}</span>
+          )}
+          {open ? <ChevronUp className="w-3 h-3 text-gray-600" /> : <ChevronDown className="w-3 h-3 text-gray-600" />}
+        </div>
+      </button>
+
+      {/* Steps */}
+      {open && (
+        <div className="px-3 pb-2.5 border-t border-surfaceBorder/30 space-y-0.5 pt-2">
+          {steps.length === 0 && (
+            <div className="flex items-center gap-2 text-[11px] text-gray-600 py-1">
+              <Loader2 className="w-2.5 h-2.5 animate-spin" />
+              Starting…
+            </div>
+          )}
+          {steps.map((s, i) => {
+            const label  = s.label || s.stage_label || s.name || s.stage || `Step ${i + 1}`
+            const status = (s.status || '').toLowerCase()
+            const isErr  = status === 'failed'
+
+            return (
+              <div key={i} className="flex items-start gap-2 py-1">
+                <div className="mt-0.5 shrink-0">{ICON(status)}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className={`text-[11px] font-medium truncate ${isErr ? 'text-danger' : 'text-gray-300'}`}>
+                      {label}
+                    </span>
+                    {typeof s.duration_ms === 'number' && (
+                      <span className="text-[10px] font-mono text-gray-700 shrink-0">{s.duration_ms}ms</span>
+                    )}
+                  </div>
+                  {s.message && (
+                    <p className={`text-[10px] leading-relaxed mt-0.5 ${isErr ? 'text-danger/70' : 'text-gray-600'}`}>
+                      {s.message.length > 100 ? s.message.slice(0, 100) + '…' : s.message}
+                    </p>
+                  )}
+                  {typeof s.trust_score === 'number' && (
+                    <span className="text-[10px] font-mono text-accent/80 flex items-center gap-1 mt-0.5">
+                      <Shield className="w-2 h-2" /> Trust {s.trust_score}/100
+                    </span>
+                  )}
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

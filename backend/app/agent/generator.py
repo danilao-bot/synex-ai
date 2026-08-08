@@ -27,6 +27,27 @@ _OPENAI_COMPAT_BASE_URLS: dict[str, str] = {
 class AgentGenerator:
     """Synthesizes dialect-correct SQL, dbt schema YAML, and PR-ready artifact bundles."""
 
+    def _clean_sql(self, text: str, kind: str = "sql") -> str:
+        """Strip markdown fences, ANSI codes, trailing junk, and inline comments from LLM output."""
+        cleaned = text or ""
+        # ANSI escape sequences (sometimes leaked from tooling)
+        cleaned = re.sub(r"\x1b\[[0-9;]*m", "", cleaned)
+        cleaned = re.sub(r"\[\d+m", "", cleaned)
+        fence = "sql" if kind == "sql" else "yaml"
+        cleaned = re.sub(rf"^```{fence}\s*", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"^```\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```\s*$", "", cleaned)
+        # Trailing lone backticks / fence remnants
+        cleaned = re.sub(r"`{1,3}\s*$", "", cleaned.strip())
+        cleaned = cleaned.strip().strip("`").strip()
+        if kind == "sql":
+            # Remove inline SQL comments that break SQLGlot AST parsing
+            # These appear as -- comment text at end of lines or on their own lines
+            cleaned = re.sub(r"--[^\n]*", "", cleaned)
+            # Collapse multiple blank lines from removed comments
+            cleaned = re.sub(r"\n{3,}", "\n\n", cleaned).strip()
+        return cleaned
+
     def _resolve_base_url(self, provider: str) -> str:
         p = (provider or "openrouter").lower().strip()
         env_override = settings.OPENROUTER_BASE_URL
@@ -105,11 +126,20 @@ class AgentGenerator:
         previous_sql: str | None = None,
         prompt: str | None = None,
         schema_fields: List[Dict[str, Any]] | None = None,
+        enriched_context_block: str | None = None,
         llm_api_key: str | None = None,
         llm_model: str | None = None,
         llm_provider: str | None = None,
+        retry_feedback: str | None = None,
+        intent: Any = None,
+        on_attempt: Any = None,
+        memory_section: str | None = None,
+        task_hint: str | None = None,
     ) -> Dict[str, Any]:
         """Generate SQL, dbt schema contract, and complete PR-ready artifact bundle."""
+        from app.llm.model_selector import select_model
+        from app.llm.providers import llm_router
+
         api_key = llm_api_key or settings.LLM_API_KEY
         model = llm_model or settings.LLM_MODEL
         provider = llm_provider or settings.LLM_PROVIDER or "openrouter"
@@ -136,34 +166,67 @@ class AgentGenerator:
         if not model_stem.startswith("fct_") and not model_stem.startswith("dim_"):
             model_stem = f"fct_{model_stem}"
 
+        choice = select_model(
+            prompt=prompt or "",
+            intent=intent,
+            provider=provider,
+            default_model=model,
+            task=task_hint or "generation",
+        )
+
         system_sql = (
-            f"You are Synex, an expert AI Data Engineering Agent.\n"
-            f"You generate production-ready dbt SQL models in {dialect.upper()} dialect "
-            f"based on real DataHub metadata.\n\n"
-            f"Rules:\n"
+            f"You are Synex, an expert AI Data Engineering Agent powered by DataHub Agent Context Kit.\n"
+            f"You generate production-ready dbt SQL models in {dialect.upper()} dialect.\n"
+            f"You MUST ground every decision in the ENGINEERING CONTEXT package below.\n"
+            f"You must NEVER invent tables, joins, or metrics that are not supported by that package.\n\n"
+            f"STRICT OUTPUT RULES — violating these causes validation failure:\n"
+            f"- Return ONLY raw SQL — no markdown fences (no ```sql), no explanation text, no preamble.\n"
+            f"- Do NOT include any SQL inline comments (-- comment). Zero comments allowed.\n"
+            f"- Use only column names that exist in SCHEMA_FIELDS. Do not invent columns.\n"
             f"- Apply SHA2(column, 256) hashing to ALL PII columns in the SELECT clause.\n"
             f"- Do NOT output raw PII columns unmasked/unhashed.\n"
-            f"- Select ONLY columns defined in the schema fields.\n"
-            f"- Use dbt {{{{ ref('{table_name}') }}}} or {{{{ source('datahub', '{table_name}') }}}} syntax.\n"
-            f"- Add inline SQL comments explaining PII masking decisions.\n"
-            f"- Return ONLY raw SQL — no markdown fences, no explanation text."
+            f"- Prefer CTEs (WITH x AS ...) for clarity. Each CTE must be syntactically complete.\n"
+            f"- Use dbt {{{{ source('datahub', '{table_name}') }}}} as the source reference.\n"
+            f"- If PREVIOUS_SESSION_SQL is present and the user asks a follow-up, refine that SQL.\n"
         )
+
+        context_section = enriched_context_block or f"Schema Fields:\n{schema_desc}\n\nPII Columns: {pii_str}"
+        prev_section = ""
+        if previous_sql:
+            prev_section = f"\n\nPREVIOUS_SESSION_SQL:\n{previous_sql}\n"
+        if memory_section:
+            prev_section += f"\n{memory_section}\n"
+        retry_section = ""
+        if retry_feedback:
+            retry_section = (
+                f"\n\n=== VALIDATOR FEEDBACK (fix these issues in this revision) ===\n"
+                f"{retry_feedback}\n"
+            )
 
         user_sql = (
             f"Generate a production dbt SQL model for {table_name}.\n"
             f"DIALECT: {dialect.upper()}\n"
             f"USER REQUEST: {prompt or 'Create a governed analytics model'}\n\n"
-            f"Schema Fields:\n{schema_desc}\n\n"
-            f"PII Columns to transform/mask: {pii_str}\n\n"
-            f"Generate the SQL model now."
+            f"{context_section}\n"
+            f"{prev_section}\n"
+            f"{retry_section}\n"
+            f"Generate the SQL model now using organizational knowledge only."
         )
 
-        sql_code = self._llm_call(provider, api_key, model, system_sql, user_sql, 0.2, 1500)
-        # Strip markdown fences if LLM accidentally included them
-        sql_code = re.sub(r"^```sql\s*", "", sql_code, flags=re.IGNORECASE)
-        sql_code = re.sub(r"^```\s*", "", sql_code).strip()
+        sql_result = llm_router.complete(
+            provider=choice.provider,
+            model=choice.model,
+            api_key=api_key,
+            system=system_sql,
+            user=user_sql,
+            temperature=0.2,
+            max_tokens=1500,
+            task=choice.task,
+            enable_fallback=True,
+            on_attempt=on_attempt,
+        )
+        sql_code = self._clean_sql(sql_result.text)
 
-        # Second call: generate dbt schema.yml
         system_yaml = (
             "You are an expert dbt developer. Return only valid YAML — no markdown fences.\n"
             "Define version: 2, models, column descriptions, and data contract tests."
@@ -172,23 +235,33 @@ class AgentGenerator:
             f"Generate the dbt schema.yml contract for model '{model_stem}' based on this SQL:\n\n"
             f"SQL MODEL:\n{sql_code}"
         )
-        dbt_yaml = self._llm_call(provider, api_key, model, system_yaml, user_yaml, 0.1, 800)
-        dbt_yaml = re.sub(r"^```yaml\s*", "", dbt_yaml, flags=re.IGNORECASE)
-        dbt_yaml = re.sub(r"^```\s*", "", dbt_yaml).strip()
+        yaml_choice = select_model(prompt=prompt or "", provider=provider, default_model=model, task="simple")
+        yaml_result = llm_router.complete(
+            provider=yaml_choice.provider,
+            model=yaml_choice.model,
+            api_key=api_key,
+            system=system_yaml,
+            user=user_yaml,
+            temperature=0.1,
+            max_tokens=800,
+            task="simple",
+            enable_fallback=True,
+            on_attempt=on_attempt,
+        )
+        dbt_yaml = self._clean_sql(yaml_result.text, kind="yaml")
 
-        # Build dbt tests list
         dbt_tests = [
             f"not_null test on primary key fields",
             f"unique test on surrogate key for {model_stem}",
             f"expression test verifying SHA2 hash length on PII columns: {pii_str}",
         ]
 
-        # Build Change Summary Markdown
         change_summary = (
             f"## Synex Governed dbt Change Summary\n\n"
             f"**Model Name:** `{model_stem}`  \n"
             f"**Target Dialect:** `{dialect.upper()}`  \n"
-            f"**Source Asset:** `{table_name}`  \n\n"
+            f"**Source Asset:** `{table_name}`  \n"
+            f"**Provider:** `{sql_result.provider}` / `{sql_result.model}`  \n\n"
             f"### Governance Decisions & PII Masking\n"
             f"- Identified PII columns: `{pii_str}`\n"
             f"- Enforced SHA2 hashing transformation on all sensitive columns.\n"
@@ -197,7 +270,6 @@ class AgentGenerator:
             f"> {prompt}\n"
         )
 
-        # Build Git Patch (Unified Diff)
         git_patch = (
             f"--- /dev/null\n"
             f"+++ b/models/generated/{model_stem}.sql\n"
@@ -223,6 +295,17 @@ class AgentGenerator:
             "sql": sql_code,
             "dbt_yaml": dbt_yaml,
             "artifact_bundle": artifact_bundle,
+            "llm_meta": {
+                "provider": sql_result.provider,
+                "model": sql_result.model,
+                "fallback_used": sql_result.fallback_used or yaml_result.fallback_used,
+                "latency_ms": sql_result.latency_ms + yaml_result.latency_ms,
+                "tokens_in": (sql_result.tokens_in or 0) + (yaml_result.tokens_in or 0),
+                "tokens_out": (sql_result.tokens_out or 0) + (yaml_result.tokens_out or 0),
+                "attempts": (sql_result.attempts or []) + (yaml_result.attempts or []),
+                "model_selection_reason": choice.reason,
+                "task": choice.task,
+            },
         }
 
 

@@ -1,3 +1,10 @@
+"""Thin facade over DataHubContextAdapter.
+
+TODO(Phase MCP / ACK integration): either expand this as the public service boundary
+or delete once all callers use datahub_context directly. Currently unused by the router
+(router imports datahub_context). Kept as a stable import surface for tests/docs.
+"""
+
 import logging
 from typing import Dict, Any, List, Optional
 from app.services.datahub_context import datahub_context
@@ -19,7 +26,7 @@ class DataHubClient:
 
     async def health_check(self) -> Dict[str, Any]:
         try:
-            fields = await datahub_context.search_candidates("test", limit=1)
+            await datahub_context.search_candidates("test", limit=1)
             return {"reachable": True, "gms_url": datahub_context.gms_url}
         except Exception as exc:
             return {"reachable": False, "error": str(exc), "gms_url": datahub_context.gms_url}

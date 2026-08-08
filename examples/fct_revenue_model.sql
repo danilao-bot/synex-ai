@@ -1,9 +1,8 @@
 -- ============================================================
--- Synex AI — Sample Generated dbt SQL Model
--- Dataset:   prod.sales.fct_revenue
+-- Synex AI — Sample Generated dbt SQL Model (examples/)
 -- Dialect:   Snowflake
--- Generated: by GPT-4o via OpenRouter, grounded in DataHub metadata
--- PII Cols:  customer_email, customer_phone (SHA2-256 masked)
+-- Notes:     Illustrative artifact with PII hashing patterns.
+--            Not a live export from a specific DataHub URN.
 -- ============================================================
 
 WITH source AS (

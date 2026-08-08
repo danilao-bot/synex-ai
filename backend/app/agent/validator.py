@@ -67,10 +67,17 @@ class AgentValidator:
         # Preprocess Jinja templates for SQLGlot AST parsing
         ast_sql = re.sub(r"\{\{\s*(ref|source)\([^)]+\)\s*\}\}", "source_model", sql)
 
-        # 2. SQL AST Parsing via SQLGlot
+        # 2. SQL AST Parsing and Safety verification via SQLGlot
         sql_ast = None
         sql_ast_valid = False
         sql_ast_error = None
+        
+        # Enforce read-only SQL safety checks
+        from app.security.sql_safety import inspect_sql_safety
+        is_safe, sql_safety_error = inspect_sql_safety(sql, dialect)
+        if not is_safe:
+            blocking_errors.append(f"SQL Safety Violation: {sql_safety_error}")
+        
         try:
             parsed = sqlglot.parse_one(ast_sql, read=dialect)
             sql_ast = parsed
